@@ -19,19 +19,19 @@
   };
 
   const defaultLineup = [
-    { id: 'p1', role: 'S', name: 'Nasrul' },
-    { id: 'p2', role: 'OPP', name: 'Akip' },
-    { id: 'p3', role: 'MB', name: 'Bazli' },
-    { id: 'p4', role: 'OH1', name: 'Luqman' },
-    { id: 'p5', role: 'L', name: 'Aiman' },
-    { id: 'p6', role: 'OH2', name: 'Rahman' }
+    { id: 'p1', role: 'S', name: 'Devin' },
+    { id: 'p2', role: 'OPP', name: 'Alex' },
+    { id: 'p3', role: 'MB', name: 'Quinn' },
+    { id: 'p4', role: 'OH1', name: 'Riley' },
+    { id: 'p5', role: 'L', name: 'Sam' },
+    { id: 'p6', role: 'OH2', name: 'Casey' }
   ];
 
   const defaultBench = [
-    { id: 'p7', role: 'L', name: 'Aimi' },
-    { id: 'p8', role: 'OH2', name: 'Sulaiman' },
-    { id: 'p9', role: 'OPP', name: 'Atiq' },
-    { id: 'p10', role: 'L', name: 'Zah' },
+    { id: 'p7', role: 'MB', name: 'Robin' },
+    { id: 'p8', role: 'OH1', name: 'Jamie' },
+    { id: 'p9', role: 'OH2', name: 'Jules' },
+    { id: 'p10', role: 'S', name: 'Taylor' },
     { id: 'p11', role: 'OPP', name: 'Kai' }
   ];
 
@@ -42,6 +42,7 @@
   let bench = [...defaultBench];
   let currentMode = 'receive';
   let selectedOnCourt = lineup[0].id;
+  let logExpanded = true;
 
   const els = {
     court: document.getElementById('court'),
@@ -54,6 +55,8 @@
     logWin: document.getElementById('log-win'),
     logLoss: document.getElementById('log-loss'),
     logList: document.getElementById('rally-log'),
+    logSummary: document.getElementById('log-summary'),
+    toggleLog: document.getElementById('toggle-log'),
     contextLine: document.getElementById('context-line'),
     onCourtSelect: document.getElementById('on-court-select'),
     benchSelect: document.getElementById('bench-select'),
@@ -110,7 +113,7 @@
     lineup.forEach((player, index) => {
       const option = document.createElement('option');
       option.value = player.id;
-      option.textContent = `${positions[index]} — ${player.role} ${player.name}`;
+      option.textContent = `${positions[index]} - ${player.role} ${player.name}`;
       els.onCourtSelect.appendChild(option);
     });
     const chosen = lineup.find((p) => p.id === previousChoice);
@@ -147,6 +150,21 @@
     });
   }
 
+  function applyLogVisibility() {
+    els.logList.classList.toggle('is-hidden', !logExpanded);
+    els.toggleLog.textContent = logExpanded ? 'Hide log' : 'Show log';
+  }
+
+  function updateLogSummary() {
+    if (!rallyHistory.length) {
+      els.logSummary.textContent = 'No rallies logged yet.';
+      return;
+    }
+    const latest = rallyHistory[0];
+    const outcome = latest.won ? 'Won' : 'Lost';
+    els.logSummary.textContent = `Latest: ${outcome} (${latest.score}) - ${latest.copy}`;
+  }
+
   function renderLog() {
     els.logList.innerHTML = '';
     rallyHistory.slice(0, 15).forEach((item) => {
@@ -158,6 +176,8 @@
         <span class="log-score">${item.score}</span>`;
       els.logList.appendChild(li);
     });
+    updateLogSummary();
+    applyLogVisibility();
   }
 
   function updateContext() {
@@ -256,6 +276,11 @@
     setStatus('Session reset. Back in receive to start.', 'info');
   }
 
+  function toggleLogList() {
+    logExpanded = !logExpanded;
+    applyLogVisibility();
+  }
+
   function initEvents() {
     els.toggleMode.addEventListener('click', toggleMode);
     els.swapPhase.addEventListener('click', toggleMode);
@@ -264,6 +289,7 @@
     els.logWin.addEventListener('click', () => logRally(true));
     els.logLoss.addEventListener('click', () => logRally(false));
     els.reset.addEventListener('click', resetMatch);
+    els.toggleLog.addEventListener('click', toggleLogList);
     els.onCourtSelect.addEventListener('change', (evt) => {
       selectedOnCourt = evt.target.value;
       renderCourt();

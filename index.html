@@ -51,6 +51,28 @@
         <div class="card">
           <div class="card-header">
             <div>
+              <h3>Rally tracker</h3>
+              <p class="muted">Log rallies and keep the rotation honest.</p>
+            </div>
+            <div class="badge">Points</div>
+          </div>
+          <div class="rally-buttons">
+            <button class="win" id="log-win">We won the rally</button>
+            <button class="loss" id="log-loss">They won the rally</button>
+          </div>
+          <div class="log-toggle">
+            <p class="muted" id="context-line">Starting in receive. Win a rally to rotate and gain serve.</p>
+            <div class="toggle-actions">
+              <span class="muted" id="log-summary">No rallies logged yet.</span>
+              <button class="ghost tiny" id="toggle-log">Hide log</button>
+            </div>
+          </div>
+          <ol class="rally-log" id="rally-log"></ol>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
               <h3>Substitution</h3>
               <p class="muted">Swap anyone on court with a bench option.</p>
             </div>
@@ -69,22 +91,6 @@
             <p class="status" id="sub-status"></p>
           </div>
           <div class="bench" id="bench-list"></div>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <h3>Rally tracker</h3>
-              <p class="muted">Log each rally to keep the rotation honest.</p>
-            </div>
-            <div class="badge">Points</div>
-          </div>
-          <div class="rally-buttons">
-            <button class="win" id="log-win">We won the rally</button>
-            <button class="loss" id="log-loss">They won the rally</button>
-          </div>
-          <p class="muted" id="context-line">Starting in receive. Win a rally to rotate and gain serve.</p>
-          <ol class="rally-log" id="rally-log"></ol>
         </div>
       </section>
     </main>
