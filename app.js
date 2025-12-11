@@ -146,6 +146,7 @@
     logSummary: document.getElementById('log-summary'),
     toggleLog: document.getElementById('toggle-log'),
     contextLine: document.getElementById('context-line'),
+    serverNote: document.getElementById('server-note'),
     onCourtSelect: document.getElementById('on-court-select'),
     benchSelect: document.getElementById('bench-select'),
     makeSub: document.getElementById('make-sub'),
@@ -163,6 +164,7 @@
     els.swapPhase.textContent = nextToggle;
     renderCourt();
     updateContext();
+    updateServerInfo();
   }
 
   function toggleMode() {
@@ -175,7 +177,9 @@
     lineup.forEach((player, index) => {
       const spot = layout[index];
       const btn = document.createElement('button');
-      btn.className = `player${selectedOnCourt === player.id ? ' selected' : ''}`;
+      const classes = ['player', index >= 1 && index <= 3 ? 'front-row' : 'back-row'];
+      if (selectedOnCourt === player.id) classes.push('selected');
+      btn.className = classes.join(' ');
       btn.style.left = `${spot.x}%`;
       btn.style.top = `${spot.y}%`;
       btn.innerHTML = `<span class="role">${player.role}</span>
@@ -193,6 +197,18 @@
   function renderScores() {
     els.scoreUs.textContent = scores.us;
     els.scoreOpp.textContent = scores.opp;
+  }
+
+  function updateServerInfo() {
+    if (!els.serverNote) return;
+    if (currentMode === 'serve') {
+      const server = lineup[0];
+      els.serverNote.textContent = `Server: ${server.name} (${server.role})`;
+      els.serverNote.dataset.state = 'serve';
+    } else {
+      els.serverNote.textContent = 'Receiving - no server';
+      els.serverNote.dataset.state = 'receive';
+    }
   }
 
   function renderSelects() {
@@ -289,6 +305,7 @@
     renderCourt();
     renderSelects();
     updateContext();
+    updateServerInfo();
   }
 
   function makeSubstitution() {
@@ -311,6 +328,7 @@
     renderSelects();
     renderBench();
     renderCourt();
+    updateServerInfo();
   }
 
   function logRally(won) {
@@ -348,6 +366,7 @@
     }
     renderLog();
     updateContext();
+    updateServerInfo();
   }
 
   function resetMatch() {
@@ -365,6 +384,7 @@
     renderCourt();
     renderLog();
     setStatus('Session reset. Back in receive to start.', 'info');
+    updateServerInfo();
   }
 
   function toggleLogList() {
@@ -395,6 +415,7 @@
     renderLog();
     updateContext();
     setStatus('Tap a player on court to target them for a sub.', 'info');
+    updateServerInfo();
   }
 
   initEvents();

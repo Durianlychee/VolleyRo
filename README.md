@@ -7,6 +7,7 @@ Solo volleyball rotation, substitution, and rally tracker built as a lightweight
 - Manual rotation, serve/receive toggle, and scoreboard with quick session reset.
 - Substitutions between on-court slots and bench players with instant lineup refresh.
 - Rally tracker with win/loss logging, score updates, collapsible recent log, and rotation awareness in the log.
+- Serving indicator in serve phase and front-row vs back-row color cues on the court.
 - Calm, readable palette using: #f5f6f8 (bg), #eef0f3 (panel), #e3e7ed (surface), #6ba3c4 (accent), #b7d6e8 (accent-2), #d9e2ec/#cfd6df (court), #9aa8ba (lines), #5a6472 (muted), #e0a0a6 (loss).
 
 ## Tech Stack

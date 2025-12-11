@@ -10,6 +10,8 @@
   --text: #1f2733;
   --muted: #5a6472;
   --border: #d1d6de;
+  --front-surface: #dfe8f1;
+  --back-surface: #e8edf4;
   --shadow: rgba(24, 32, 43, 0.16);
   --win: #7bbf96;
   --loss: #e0a0a6;
@@ -85,6 +87,17 @@ p {
 
 .mode-pill[data-state="serve"] {
   background: rgba(183, 214, 232, 0.5);
+}
+
+.server-note {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.server-note[data-state="serve"] {
+  color: var(--accent);
+  font-weight: 700;
 }
 
 .scoreboard {
@@ -186,7 +199,7 @@ p {
   width: 96px;
   height: 96px;
   border-radius: 16px;
-  background: var(--surface);
+  background: var(--back-surface);
   border: 2px solid transparent;
   color: var(--text);
   padding: 10px 12px;
@@ -228,6 +241,15 @@ p {
 .player.selected {
   border-color: var(--accent);
   box-shadow: 0 14px 28px rgba(107, 163, 196, 0.3);
+}
+
+.player.front-row {
+  background: var(--front-surface);
+  border-color: rgba(107, 163, 196, 0.4);
+}
+
+.player.back-row {
+  background: var(--back-surface);
 }
 
 .stack {
