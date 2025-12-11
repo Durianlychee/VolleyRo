@@ -119,20 +119,20 @@
 
   // 5-1: one setter, two outsides, one opposite, one middle, one libero.
   const defaultLineup = [
-    { id: 'p1', role: 'S', name: 'Devin' },
-    { id: 'p2', role: 'OPP', name: 'Alex' },
-    { id: 'p3', role: 'MB', name: 'Quinn' },
-    { id: 'p4', role: 'OH1', name: 'Riley' },
-    { id: 'p5', role: 'L', name: 'Sam' },
-    { id: 'p6', role: 'OH2', name: 'Casey' }
+    { id: 'p1', role: 'S', name: 'Nasrul' },
+    { id: 'p2', role: 'OPP', name: 'Akip' },
+    { id: 'p3', role: 'MB', name: 'Bazli' },
+    { id: 'p4', role: 'OH1', name: 'Luqman' },
+    { id: 'p5', role: 'L', name: 'Zahirah' },
+    { id: 'p6', role: 'OH2', name: 'Rahman' }
   ];
 
   const defaultBench = [
-    { id: 'p7', role: 'S', name: 'Taylor' },
-    { id: 'p8', role: 'OH', name: 'Jamie' },
-    { id: 'p9', role: 'MB', name: 'Robin' },
-    { id: 'p10', role: 'OPP', name: 'Kai' },
-    { id: 'p11', role: 'L', name: 'Morgan' }
+    { id: 'p7', role: 'OPP', name: 'Atiq' },
+    { id: 'p8', role: 'OH1', name: 'Sulaiman' },
+    { id: 'p9', role: 'L', name: 'Aimi' },
+    { id: 'p10', role: 'L', name: 'Aiman' },
+    { id: 'p11', role: 'OH2', name: 'Akip' }
   ];
 
   const positions = ['1 (RB)', '2 (RF)', '3 (MF)', '4 (LF)', '5 (LB)', '6 (MB)'];
