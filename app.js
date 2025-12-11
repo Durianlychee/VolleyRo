@@ -1,105 +1,118 @@
 ﻿(() => {
   // Rotation-specific layouts (serve/receive) for a 5-1 with S, OPP, MB, OH1, L, OH2.
-  // Index order: 0 RB, 1 RF, 2 MF, 3 LF, 4 LB, 5 MB (back middle).
+  // Coordinates are percentage-based for the court container.
+  // lineup rotates; rotationIndex selects pattern matching diagrams (M2 replaced by L).
   const layouts = {
     serve: [
+      // Rotation 1: front OPP-MB-OH1, back OH2-L-S
       [
-        { label: 'RB', x: 82, y: 90 },
-        { label: 'RF', x: 22, y: 22 },
-        { label: 'MF', x: 50, y: 20 },
-        { label: 'LF', x: 75, y: 22 },
-        { label: 'LB', x: 52, y: 68 },
-        { label: 'MB', x: 25, y: 65 }
+        { label: 'RB', x: 84, y: 92 }, // S
+        { label: 'LF', x: 22, y: 24 }, // OPP
+        { label: 'MF', x: 50, y: 20 }, // MB
+        { label: 'RF', x: 76, y: 24 }, // OH1
+        { label: 'MB', x: 52, y: 70 }, // L
+        { label: 'LB', x: 26, y: 70 }  // OH2
       ],
+      // Rotation 2: front OH2-OPP-MB, back OH1-L-S
       [
-        { label: 'RB', x: 70, y: 78 },
-        { label: 'RF', x: 72, y: 24 },
-        { label: 'MF', x: 50, y: 22 },
-        { label: 'LF', x: 25, y: 24 },
-        { label: 'LB', x: 50, y: 70 },
-        { label: 'MB', x: 18, y: 88 }
+        { label: 'MF', x: 50, y: 24 }, // OPP
+        { label: 'RF', x: 74, y: 24 }, // MB
+        { label: 'RB', x: 84, y: 92 }, // OH1 (server)
+        { label: 'MB', x: 52, y: 70 }, // L
+        { label: 'LF', x: 22, y: 26 }, // OH2
+        { label: 'BR', x: 78, y: 60 }  // S
       ],
+      // Rotation 3: front L-OH2-OPP, back S-OH1-MB
       [
-        { label: 'RB', x: 64, y: 70 },
-        { label: 'RF', x: 78, y: 26 },
-        { label: 'MF', x: 60, y: 26 },
-        { label: 'LF', x: 36, y: 40 },
-        { label: 'LB', x: 20, y: 72 },
-        { label: 'MB', x: 78, y: 92 }
+        { label: 'RB', x: 72, y: 88 }, // MB
+        { label: 'MB', x: 50, y: 60 }, // OH1
+        { label: 'LF', x: 26, y: 26 }, // L
+        { label: 'MF', x: 56, y: 24 }, // OH2
+        { label: 'RF', x: 72, y: 42 }, // S
+        { label: 'FR', x: 84, y: 24 }  // OPP
       ],
+      // Rotation 4: front S-L-OH2, back OH1-MB-OPP
       [
-        { label: 'RB', x: 80, y: 32 },
-        { label: 'RF', x: 70, y: 24 },
-        { label: 'MF', x: 50, y: 24 },
-        { label: 'LF', x: 24, y: 24 },
-        { label: 'LB', x: 42, y: 70 },
-        { label: 'MB', x: 76, y: 70 }
+        { label: 'LB', x: 26, y: 52 }, // OH1
+        { label: 'MF', x: 40, y: 24 }, // L
+        { label: 'RF', x: 70, y: 24 }, // OH2
+        { label: 'LF', x: 10, y: 24 }, // S
+        { label: 'RB', x: 86, y: 72 }, // OPP
+        { label: 'MB', x: 52, y: 68 }  // MB
       ],
+      // Rotation 5: front OH1-S-L, back MB-OPP-OH2
       [
-        { label: 'RB', x: 78, y: 68 },
-        { label: 'RF', x: 22, y: 22 },
-        { label: 'MF', x: 50, y: 20 },
-        { label: 'LF', x: 70, y: 22 },
-        { label: 'LB', x: 55, y: 68 },
-        { label: 'MB', x: 20, y: 88 }
+        { label: 'RF', x: 74, y: 24 }, // L
+        { label: 'LB', x: 84, y: 88 }, // OH2
+        { label: 'MF', x: 50, y: 22 }, // S
+        { label: 'RB', x: 60, y: 56 }, // OPP
+        { label: 'MB', x: 44, y: 70 }, // MB
+        { label: 'LF', x: 26, y: 24 }  // OH1
       ],
+      // Rotation 6: front MB-OH1-S, back OH2-OPP-L
       [
-        { label: 'RB', x: 76, y: 24 },
-        { label: 'RF', x: 70, y: 22 },
-        { label: 'MF', x: 50, y: 22 },
-        { label: 'LF', x: 22, y: 22 },
-        { label: 'LB', x: 38, y: 60 },
-        { label: 'MB', x: 70, y: 92 }
+        { label: 'LB', x: 32, y: 60 }, // OH2
+        { label: 'RF', x: 74, y: 22 }, // S
+        { label: 'MF', x: 60, y: 44 }, // OPP
+        { label: 'LF', x: 26, y: 22 }, // MB
+        { label: 'MB', x: 48, y: 22 }, // OH1
+        { label: 'RB', x: 84, y: 88 }  // L
       ]
     ],
     receive: [
+      // Rotation 1 receive: front OPP-MB-OH1, back OH2-L-S up
       [
-        { label: 'RB', x: 84, y: 78 },
-        { label: 'RF', x: 28, y: 36 },
-        { label: 'MF', x: 52, y: 34 },
-        { label: 'LF', x: 75, y: 34 },
-        { label: 'LB', x: 52, y: 66 },
-        { label: 'MB', x: 18, y: 66 }
+        { label: 'RB', x: 86, y: 60 }, // S
+        { label: 'LF', x: 26, y: 34 }, // OPP
+        { label: 'MF', x: 50, y: 30 }, // MB
+        { label: 'RF', x: 78, y: 34 }, // OH1
+        { label: 'MB', x: 52, y: 70 }, // L
+        { label: 'LB', x: 32, y: 68 }  // OH2
       ],
+      // Rotation 2 receive: OH2 left, OPP front right stack with S, MB right back, OH1 mid, L middle
       [
-        { label: 'RB', x: 70, y: 60 },
-        { label: 'RF', x: 78, y: 32 },
-        { label: 'MF', x: 52, y: 32 },
-        { label: 'LF', x: 26, y: 40 },
-        { label: 'LB', x: 46, y: 70 },
-        { label: 'MB', x: 22, y: 72 }
+        { label: 'RF', x: 70, y: 38 }, // OPP
+        { label: 'RB', x: 86, y: 64 }, // MB
+        { label: 'MB', x: 44, y: 72 }, // OH1
+        { label: 'MB2', x: 52, y: 64 }, // L
+        { label: 'LF', x: 28, y: 44 }, // OH2
+        { label: 'RS', x: 76, y: 50 }  // S
       ],
+      // Rotation 3 receive: L left, OH2 right, S mid, OPP right, OH1 mid, MB right
       [
-        { label: 'RB', x: 70, y: 52 },
-        { label: 'RF', x: 70, y: 24 },
-        { label: 'MF', x: 50, y: 30 },
-        { label: 'LF', x: 30, y: 46 },
-        { label: 'LB', x: 55, y: 70 },
-        { label: 'MB', x: 80, y: 80 }
+        { label: 'RB', x: 82, y: 70 }, // MB
+        { label: 'MB', x: 52, y: 50 }, // OH1
+        { label: 'LF', x: 24, y: 26 }, // L
+        { label: 'RF', x: 70, y: 26 }, // OH2
+        { label: 'RS', x: 46, y: 44 }, // S
+        { label: 'FR', x: 86, y: 44 }  // OPP
       ],
+      // Rotation 4 receive: S far left, L left-mid, OH2 mid; back OH1, MB, OPP right
       [
-        { label: 'RB', x: 88, y: 32 },
-        { label: 'RF', x: 70, y: 28 },
-        { label: 'MF', x: 52, y: 32 },
-        { label: 'LF', x: 26, y: 32 },
-        { label: 'LB', x: 42, y: 70 },
-        { label: 'MB', x: 78, y: 70 }
+        { label: 'LB', x: 52, y: 48 }, // OH1
+        { label: 'MF', x: 32, y: 34 }, // L
+        { label: 'RF', x: 28, y: 44 }, // OH2
+        { label: 'LF', x: 10, y: 34 }, // S
+        { label: 'RB', x: 86, y: 54 }, // OPP
+        { label: 'MB', x: 66, y: 46 }  // MB
       ],
+      // Rotation 5 receive: front OH1-OPP-OH2, back S-L-MB
       [
-        { label: 'RB', x: 80, y: 24 },
-        { label: 'RF', x: 68, y: 32 },
-        { label: 'MF', x: 52, y: 32 },
-        { label: 'LF', x: 24, y: 34 },
-        { label: 'LB', x: 50, y: 70 },
-        { label: 'MB', x: 70, y: 70 }
+        { label: 'LB', x: 68, y: 64 }, // L
+        { label: 'RB', x: 82, y: 60 }, // OH2
+        { label: 'MB', x: 72, y: 28 }, // S
+        { label: 'FR', x: 64, y: 44 }, // OPP
+        { label: 'MB2', x: 44, y: 54 }, // MB
+        { label: 'LF', x: 28, y: 34 }  // OH1
       ],
+      // Rotation 6 receive: front OH2-OPP-MB, back OH1-S-L
       [
-        { label: 'RB', x: 80, y: 70 },
-        { label: 'RF', x: 24, y: 24 },
-        { label: 'MF', x: 50, y: 28 },
-        { label: 'LF', x: 70, y: 32 },
-        { label: 'LB', x: 32, y: 60 },
-        { label: 'MB', x: 70, y: 84 }
+        { label: 'LF', x: 32, y: 32 }, // OH2
+        { label: 'RF', x: 72, y: 60 }, // S
+        { label: 'MF', x: 64, y: 36 }, // OPP
+        { label: 'MB', x: 24, y: 36 }, // MB
+        { label: 'LB', x: 48, y: 60 }, // OH1
+        { label: 'RB', x: 82, y: 70 }  // L
       ]
     ]
   };
@@ -146,7 +159,6 @@
     logSummary: document.getElementById('log-summary'),
     toggleLog: document.getElementById('toggle-log'),
     contextLine: document.getElementById('context-line'),
-    serverNote: document.getElementById('server-note'),
     onCourtSelect: document.getElementById('on-court-select'),
     benchSelect: document.getElementById('bench-select'),
     makeSub: document.getElementById('make-sub'),
@@ -164,7 +176,6 @@
     els.swapPhase.textContent = nextToggle;
     renderCourt();
     updateContext();
-    updateServerInfo();
   }
 
   function toggleMode() {
@@ -174,6 +185,7 @@
   function renderCourt() {
     els.court.innerHTML = '';
     const layout = layouts[currentMode][rotationIndex];
+    const serverId = currentMode === 'serve' ? lineup[0].id : null;
     lineup.forEach((player, index) => {
       const spot = layout[index];
       const btn = document.createElement('button');
@@ -182,8 +194,10 @@
       btn.className = classes.join(' ');
       btn.style.left = `${spot.x}%`;
       btn.style.top = `${spot.y}%`;
+      const serverBadge = serverId === player.id ? '<span class="server-badge">Serving</span>' : '';
       btn.innerHTML = `<span class="role">${player.role}</span>
         <span class="name">${player.name}</span>
+        ${serverBadge}
         <span class="pos-label">${spot.label} · Rot ${rotationIndex + 1}</span>`;
       btn.addEventListener('click', () => {
         selectedOnCourt = player.id;
@@ -197,18 +211,6 @@
   function renderScores() {
     els.scoreUs.textContent = scores.us;
     els.scoreOpp.textContent = scores.opp;
-  }
-
-  function updateServerInfo() {
-    if (!els.serverNote) return;
-    if (currentMode === 'serve') {
-      const server = lineup[0];
-      els.serverNote.textContent = `Server: ${server.name} (${server.role})`;
-      els.serverNote.dataset.state = 'serve';
-    } else {
-      els.serverNote.textContent = 'Receiving - no server';
-      els.serverNote.dataset.state = 'receive';
-    }
   }
 
   function renderSelects() {
@@ -305,7 +307,6 @@
     renderCourt();
     renderSelects();
     updateContext();
-    updateServerInfo();
   }
 
   function makeSubstitution() {
@@ -328,7 +329,6 @@
     renderSelects();
     renderBench();
     renderCourt();
-    updateServerInfo();
   }
 
   function logRally(won) {
@@ -366,7 +366,6 @@
     }
     renderLog();
     updateContext();
-    updateServerInfo();
   }
 
   function resetMatch() {
@@ -384,7 +383,6 @@
     renderCourt();
     renderLog();
     setStatus('Session reset. Back in receive to start.', 'info');
-    updateServerInfo();
   }
 
   function toggleLogList() {
@@ -415,7 +413,6 @@
     renderLog();
     updateContext();
     setStatus('Tap a player on court to target them for a sub.', 'info');
-    updateServerInfo();
   }
 
   initEvents();

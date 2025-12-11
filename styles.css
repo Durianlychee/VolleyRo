@@ -89,17 +89,6 @@ p {
   background: rgba(183, 214, 232, 0.5);
 }
 
-.server-note {
-  font-size: 13px;
-  color: var(--muted);
-  margin-top: 2px;
-}
-
-.server-note[data-state="serve"] {
-  color: var(--accent);
-  font-weight: 700;
-}
-
 .scoreboard {
   display: flex;
   align-items: center;
@@ -250,6 +239,17 @@ p {
 
 .player.back-row {
   background: var(--back-surface);
+}
+
+.server-badge {
+  display: inline-flex;
+  margin-top: 2px;
+  padding: 4px 8px;
+  border-radius: 10px;
+  background: rgba(107, 163, 196, 0.6);
+  color: var(--text);
+  font-weight: 800;
+  font-size: 12px;
 }
 
 .stack {
