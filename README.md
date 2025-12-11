@@ -3,11 +3,11 @@
 Solo volleyball rotation, substitution, and rally tracker built as a lightweight single-page app.
 
 ## Features
-- Interactive court map with role markers (S, OH1, OH2, OPP, MB, L) and serve/receive layouts.
+- Interactive court map with serve/receive layouts; default lineup is a 5-1 (S, OPP, OH1, OH2, MB, L).
 - Manual rotation, serve/receive toggle, and scoreboard with quick session reset.
 - Substitutions between on-court slots and bench players with instant lineup refresh.
 - Rally tracker with win/loss logging, score updates, and a collapsible recent log.
-- Clean Dark Sunshine Indigo palette using: #584567 (base), #906F77 (panel), #75ABC3 (cool accent), #FFDF37 (sunshine accent), #F9FDF2 (text/lines), #B0B8D3 (muted), #F6130F (loss state).
+- Calm, readable palette using: #f5f6f8 (bg), #eef0f3 (panel), #e3e7ed (surface), #6ba3c4 (accent), #b7d6e8 (accent-2), #d9e2ec/#cfd6df (court), #9aa8ba (lines), #5a6472 (muted), #e0a0a6 (loss).
 
 ## Tech Stack
 - HTML + CSS + vanilla JavaScript.
@@ -26,7 +26,7 @@ Solo volleyball rotation, substitution, and rally tracker built as a lightweight
 - Reset: "Reset session" clears scores, history, and returns to the default lineup in receive.
 
 ## Customization Ideas
-- Edit `defaultLineup` and `defaultBench` in `app.js` to rename players and roles.
+- Edit `defaultLineup` and `defaultBench` in `app.js` to rename players, swap who plays L vs back-row OH, or tweak the 5-1 mix.
 - Adjust colors in `styles.css` by editing the CSS variables in the `:root` block.
 
 ## Notes

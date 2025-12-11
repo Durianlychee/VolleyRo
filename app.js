@@ -18,6 +18,7 @@
     ]
   };
 
+  // 5-1: one setter, two outsides, one opposite, one middle, one libero
   const defaultLineup = [
     { id: 'p1', role: 'S', name: 'Devin' },
     { id: 'p2', role: 'OPP', name: 'Alex' },
@@ -28,11 +29,11 @@
   ];
 
   const defaultBench = [
-    { id: 'p7', role: 'MB', name: 'Robin' },
-    { id: 'p8', role: 'OH1', name: 'Jamie' },
-    { id: 'p9', role: 'OH2', name: 'Jules' },
-    { id: 'p10', role: 'S', name: 'Taylor' },
-    { id: 'p11', role: 'OPP', name: 'Kai' }
+    { id: 'p7', role: 'S', name: 'Taylor' },
+    { id: 'p8', role: 'OH', name: 'Jamie' },
+    { id: 'p9', role: 'MB', name: 'Robin' },
+    { id: 'p10', role: 'OPP', name: 'Kai' },
+    { id: 'p11', role: 'L', name: 'Morgan' }
   ];
 
   const positions = ['1 (RB)', '2 (RF)', '3 (MF)', '4 (LF)', '5 (LB)', '6 (MB)'];
