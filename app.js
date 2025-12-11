@@ -1,24 +1,110 @@
 ﻿(() => {
+  // Rotation-specific layouts (serve/receive) for a 5-1 with S, OPP, MB, OH1, L, OH2.
+  // Index order: 0 RB, 1 RF, 2 MF, 3 LF, 4 LB, 5 MB (back middle).
   const layouts = {
     serve: [
-      { label: 1, x: 75, y: 82 },
-      { label: 2, x: 75, y: 58 },
-      { label: 3, x: 50, y: 58 },
-      { label: 4, x: 25, y: 58 },
-      { label: 5, x: 25, y: 82 },
-      { label: 6, x: 50, y: 82 }
+      [
+        { label: 'RB', x: 82, y: 90 },
+        { label: 'RF', x: 22, y: 22 },
+        { label: 'MF', x: 50, y: 20 },
+        { label: 'LF', x: 75, y: 22 },
+        { label: 'LB', x: 52, y: 68 },
+        { label: 'MB', x: 25, y: 65 }
+      ],
+      [
+        { label: 'RB', x: 70, y: 78 },
+        { label: 'RF', x: 72, y: 24 },
+        { label: 'MF', x: 50, y: 22 },
+        { label: 'LF', x: 25, y: 24 },
+        { label: 'LB', x: 50, y: 70 },
+        { label: 'MB', x: 18, y: 88 }
+      ],
+      [
+        { label: 'RB', x: 64, y: 70 },
+        { label: 'RF', x: 78, y: 26 },
+        { label: 'MF', x: 60, y: 26 },
+        { label: 'LF', x: 36, y: 40 },
+        { label: 'LB', x: 20, y: 72 },
+        { label: 'MB', x: 78, y: 92 }
+      ],
+      [
+        { label: 'RB', x: 80, y: 32 },
+        { label: 'RF', x: 70, y: 24 },
+        { label: 'MF', x: 50, y: 24 },
+        { label: 'LF', x: 24, y: 24 },
+        { label: 'LB', x: 42, y: 70 },
+        { label: 'MB', x: 76, y: 70 }
+      ],
+      [
+        { label: 'RB', x: 78, y: 68 },
+        { label: 'RF', x: 22, y: 22 },
+        { label: 'MF', x: 50, y: 20 },
+        { label: 'LF', x: 70, y: 22 },
+        { label: 'LB', x: 55, y: 68 },
+        { label: 'MB', x: 20, y: 88 }
+      ],
+      [
+        { label: 'RB', x: 76, y: 24 },
+        { label: 'RF', x: 70, y: 22 },
+        { label: 'MF', x: 50, y: 22 },
+        { label: 'LF', x: 22, y: 22 },
+        { label: 'LB', x: 38, y: 60 },
+        { label: 'MB', x: 70, y: 92 }
+      ]
     ],
     receive: [
-      { label: 1, x: 68, y: 84 },
-      { label: 2, x: 72, y: 58 },
-      { label: 3, x: 50, y: 55 },
-      { label: 4, x: 28, y: 60 },
-      { label: 5, x: 32, y: 84 },
-      { label: 6, x: 50, y: 70 }
+      [
+        { label: 'RB', x: 84, y: 78 },
+        { label: 'RF', x: 28, y: 36 },
+        { label: 'MF', x: 52, y: 34 },
+        { label: 'LF', x: 75, y: 34 },
+        { label: 'LB', x: 52, y: 66 },
+        { label: 'MB', x: 18, y: 66 }
+      ],
+      [
+        { label: 'RB', x: 70, y: 60 },
+        { label: 'RF', x: 78, y: 32 },
+        { label: 'MF', x: 52, y: 32 },
+        { label: 'LF', x: 26, y: 40 },
+        { label: 'LB', x: 46, y: 70 },
+        { label: 'MB', x: 22, y: 72 }
+      ],
+      [
+        { label: 'RB', x: 70, y: 52 },
+        { label: 'RF', x: 70, y: 24 },
+        { label: 'MF', x: 50, y: 30 },
+        { label: 'LF', x: 30, y: 46 },
+        { label: 'LB', x: 55, y: 70 },
+        { label: 'MB', x: 80, y: 80 }
+      ],
+      [
+        { label: 'RB', x: 88, y: 32 },
+        { label: 'RF', x: 70, y: 28 },
+        { label: 'MF', x: 52, y: 32 },
+        { label: 'LF', x: 26, y: 32 },
+        { label: 'LB', x: 42, y: 70 },
+        { label: 'MB', x: 78, y: 70 }
+      ],
+      [
+        { label: 'RB', x: 80, y: 24 },
+        { label: 'RF', x: 68, y: 32 },
+        { label: 'MF', x: 52, y: 32 },
+        { label: 'LF', x: 24, y: 34 },
+        { label: 'LB', x: 50, y: 70 },
+        { label: 'MB', x: 70, y: 70 }
+      ],
+      [
+        { label: 'RB', x: 80, y: 70 },
+        { label: 'RF', x: 24, y: 24 },
+        { label: 'MF', x: 50, y: 28 },
+        { label: 'LF', x: 70, y: 32 },
+        { label: 'LB', x: 32, y: 60 },
+        { label: 'MB', x: 70, y: 84 }
+      ]
     ]
   };
 
-  // 5-1: one setter, two outsides, one opposite, one middle, one libero
+  // 5-1: one setter, two outsides, one opposite, one middle, one libero.
   const defaultLineup = [
     { id: 'p1', role: 'S', name: 'Devin' },
     { id: 'p2', role: 'OPP', name: 'Alex' },
@@ -42,6 +128,7 @@
   let lineup = [...defaultLineup];
   let bench = [...defaultBench];
   let currentMode = 'receive';
+  let rotationIndex = 0;
   let selectedOnCourt = lineup[0].id;
   let logExpanded = true;
 
@@ -84,7 +171,7 @@
 
   function renderCourt() {
     els.court.innerHTML = '';
-    const layout = layouts[currentMode];
+    const layout = layouts[currentMode][rotationIndex];
     lineup.forEach((player, index) => {
       const spot = layout[index];
       const btn = document.createElement('button');
@@ -93,7 +180,7 @@
       btn.style.top = `${spot.y}%`;
       btn.innerHTML = `<span class="role">${player.role}</span>
         <span class="name">${player.name}</span>
-        <span class="pos-label">Pos ${spot.label}</span>`;
+        <span class="pos-label">${spot.label} · Rot ${rotationIndex + 1}</span>`;
       btn.addEventListener('click', () => {
         selectedOnCourt = player.id;
         els.onCourtSelect.value = player.id;
@@ -183,9 +270,9 @@
 
   function updateContext() {
     const modeCopy = currentMode === 'serve'
-      ? 'Serving: keep position unless we lose the rally.'
-      : 'Receiving: win the rally to rotate and gain serve.';
-    els.contextLine.textContent = modeCopy;
+      ? 'Serving: follow the rotation lane, then move to perimeter defense.'
+      : 'Receiving: honor overlaps, then flow to attack after first contact.';
+    els.contextLine.textContent = `${modeCopy} Rotation ${rotationIndex + 1}.`;
   }
 
   function setStatus(message, tone = 'muted') {
@@ -196,10 +283,12 @@
   function rotateLineup() {
     const moved = lineup.shift();
     lineup.push(moved);
+    rotationIndex = (rotationIndex + 1) % 6;
     selectedOnCourt = lineup[0].id;
     setStatus('Rotation advanced clockwise after a side-out.', 'info');
     renderCourt();
     renderSelects();
+    updateContext();
   }
 
   function makeSubstitution() {
@@ -248,7 +337,7 @@
       : before === 'serve'
         ? 'Lost serve -> back to receive.'
         : 'Stayed in receive.';
-    const copy = `${note} Mode: ${after}.`;
+    const copy = `${note} Rot ${rotationIndex + 1}, Mode: ${after}.`;
     rallyHistory.unshift({
       won,
       copy,
@@ -267,6 +356,7 @@
     rallyHistory.length = 0;
     lineup = [...defaultLineup];
     bench = [...defaultBench];
+    rotationIndex = 0;
     selectedOnCourt = lineup[0].id;
     setMode('receive');
     renderScores();
