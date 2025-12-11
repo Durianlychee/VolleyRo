@@ -1,0 +1,94 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VolleyRo | Rotation and Rally Tracker</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="hero">
+      <div class="brand">
+        <div class="brand-mark">VolleyRo</div>
+        <p class="muted">Solo rotation + rally tracking for quick decisions.</p>
+      </div>
+      <div class="mode-panel">
+        <p class="muted tiny">Current phase</p>
+        <div class="mode-pill" id="mode-label">Receive</div>
+        <button class="ghost" id="toggle-mode">Switch to serve</button>
+      </div>
+      <div class="scoreboard">
+        <div class="score-pair">
+          <div class="score-label">Us</div>
+          <div class="score-value" id="score-us">0</div>
+        </div>
+        <div class="divider">:</div>
+        <div class="score-pair">
+          <div class="score-label">Opp</div>
+          <div class="score-value" id="score-opp">0</div>
+        </div>
+        <button class="ghost small" id="reset-match">Reset session</button>
+      </div>
+    </header>
+
+    <main class="grid">
+      <section class="card court-card">
+        <div class="card-header">
+          <div>
+            <h2>Court map</h2>
+            <p class="muted">Positions update with rotations and substitutions.</p>
+          </div>
+          <div class="btn-row">
+            <button id="rotate-lineup" class="ghost">Rotate clockwise</button>
+            <button id="swap-phase" class="ghost">Toggle serve/receive</button>
+          </div>
+        </div>
+        <div class="court" id="court"></div>
+      </section>
+
+      <section class="stack">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3>Substitution</h3>
+              <p class="muted">Swap anyone on court with a bench option.</p>
+            </div>
+            <div class="badge">Lineup</div>
+          </div>
+          <div class="sub-controls">
+            <label class="field">
+              <span>On-court slot</span>
+              <select id="on-court-select"></select>
+            </label>
+            <label class="field">
+              <span>Bench</span>
+              <select id="bench-select"></select>
+            </label>
+            <button id="make-sub">Sub in</button>
+            <p class="status" id="sub-status"></p>
+          </div>
+          <div class="bench" id="bench-list"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3>Rally tracker</h3>
+              <p class="muted">Log each rally to keep the rotation honest.</p>
+            </div>
+            <div class="badge">Points</div>
+          </div>
+          <div class="rally-buttons">
+            <button class="win" id="log-win">We won the rally</button>
+            <button class="loss" id="log-loss">They won the rally</button>
+          </div>
+          <p class="muted" id="context-line">Starting in receive. Win a rally to rotate and gain serve.</p>
+          <ol class="rally-log" id="rally-log"></ol>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
