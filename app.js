@@ -135,6 +135,9 @@
     { id: 'p11', role: 'OH2', name: 'Akip' }
   ];
 
+  // Official serving order starting from rotation 1 (setter in 1).
+  const serveOrder = ['S', 'OH1', 'MB', 'OPP', 'OH2', 'L'];
+
   const positions = ['1 (RB)', '2 (RF)', '3 (MF)', '4 (LF)', '5 (LB)', '6 (MB)'];
   const scores = { us: 0, opp: 0 };
   const rallyHistory = [];
@@ -182,10 +185,18 @@
     setMode(currentMode === 'serve' ? 'receive' : 'serve');
   }
 
+  // Determine who should be serving based on the fixed clockwise order.
+  function getServerId() {
+    if (currentMode !== 'serve') return null;
+    const role = serveOrder[rotationIndex % serveOrder.length];
+    const match = lineup.find((player) => player.role === role);
+    return match ? match.id : lineup[0]?.id;
+  }
+
   function renderCourt() {
     els.court.innerHTML = '';
     const layout = layouts[currentMode][rotationIndex];
-    const serverId = currentMode === 'serve' ? lineup[0].id : null;
+    const serverId = getServerId();
     lineup.forEach((player, index) => {
       const spot = layout[index];
       const btn = document.createElement('button');
