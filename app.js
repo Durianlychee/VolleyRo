@@ -1,142 +1,152 @@
 ﻿(() => {
-  // Rotation-specific layouts (serve/receive) for a 5-1 with S, OPP, MB, OH1, L, OH2.
+  // Rotation-specific layouts (serve/receive) for a 5-1 with S1, OPP, M1, OH1, OH2, M2.
   // Coordinates are percentage-based for the court container.
-  // lineup rotates; rotationIndex selects pattern matching diagrams (M2 replaced by L).
+  // Lineup rotates; rotationIndex selects the matching rotation pattern.
   const layouts = {
     serve: [
-      // Rotation 1: front OPP-MB-OH1, back OH2-L-S
+      // Rotation 1: front OPP-M1-OH1, back OH2-M2-S1
       [
-        { label: 'RB', x: 84, y: 92 }, // S
+        { label: 'RB', x: 84, y: 92 }, // S1 (server)
         { label: 'LF', x: 22, y: 24 }, // OPP
-        { label: 'MF', x: 50, y: 20 }, // MB
+        { label: 'MF', x: 50, y: 20 }, // M1
         { label: 'RF', x: 76, y: 24 }, // OH1
-        { label: 'MB', x: 52, y: 70 }, // L
-        { label: 'LB', x: 26, y: 70 }  // OH2
+        { label: 'LB', x: 26, y: 60 }, // OH2 (up to attack line)
+        { label: 'MB', x: 52, y: 60 }  // M2 (up to attack line)
       ],
-      // Rotation 2: front OH2-OPP-MB, back OH1-L-S
+      // Rotation 2: front OH2-OPP-M1, back M2-S1-OH1
       [
         { label: 'MF', x: 50, y: 24 }, // OPP
-        { label: 'RF', x: 74, y: 24 }, // MB
+        { label: 'RF', x: 76, y: 24 }, // M1
         { label: 'RB', x: 84, y: 92 }, // OH1 (server)
-        { label: 'MB', x: 52, y: 70 }, // L
-        { label: 'LF', x: 22, y: 26 }, // OH2
-        { label: 'BR', x: 78, y: 60 }  // S
+        { label: 'LF', x: 22, y: 24 }, // OH2
+        { label: 'LB', x: 26, y: 70 }, // M2
+        { label: 'MB', x: 52, y: 70 }  // S1
       ],
-      // Rotation 3: front L-OH2-OPP, back S-OH1-MB
+      // Rotation 3: front M2-OH2-OPP, back S1-OH1-M1
       [
-        { label: 'RB', x: 72, y: 88 }, // MB
-        { label: 'MB', x: 50, y: 60 }, // OH1
-        { label: 'LF', x: 26, y: 26 }, // L
-        { label: 'MF', x: 56, y: 24 }, // OH2
-        { label: 'RF', x: 72, y: 42 }, // S
-        { label: 'FR', x: 84, y: 24 }  // OPP
+        { label: 'RB', x: 84, y: 92 }, // M1 (server)
+        { label: 'MB', x: 58, y: 70 }, // OH1
+        { label: 'MF', x: 56, y: 22 }, // OH2
+        { label: 'LF', x: 30, y: 24 }, // M2
+        { label: 'LB', x: 40, y: 70 }, // S1
+        { label: 'RF', x: 82, y: 26 }  // OPP
       ],
-      // Rotation 4: front S-L-OH2, back OH1-MB-OPP
+      // Rotation 4: front S1-M2-OH2, back OH1-M1-OPP
       [
-        { label: 'LB', x: 26, y: 52 }, // OH1
-        { label: 'MF', x: 40, y: 24 }, // L
-        { label: 'RF', x: 70, y: 24 }, // OH2
-        { label: 'LF', x: 10, y: 24 }, // S
-        { label: 'RB', x: 86, y: 72 }, // OPP
-        { label: 'MB', x: 52, y: 68 }  // MB
+        { label: 'LB', x: 26, y: 70 }, // OH1
+        { label: 'RF', x: 76, y: 24 }, // OH2
+        { label: 'MF', x: 50, y: 20 }, // M2
+        { label: 'LF', x: 22, y: 24 }, // S1
+        { label: 'RB', x: 84, y: 92 }, // OPP (server)
+        { label: 'MB', x: 52, y: 70 }  // M1
       ],
-      // Rotation 5: front OH1-S-L, back MB-OPP-OH2
+      // Rotation 5: front OH1-S1-M2, back M1-OPP-OH2
       [
-        { label: 'RF', x: 74, y: 24 }, // L
-        { label: 'LB', x: 84, y: 88 }, // OH2
-        { label: 'MF', x: 50, y: 22 }, // S
-        { label: 'RB', x: 60, y: 56 }, // OPP
-        { label: 'MB', x: 44, y: 70 }, // MB
-        { label: 'LF', x: 26, y: 24 }  // OH1
+        { label: 'RB', x: 84, y: 92 }, // OH2 (server)
+        { label: 'RF', x: 76, y: 24 }, // M2
+        { label: 'MF', x: 50, y: 20 }, // S1
+        { label: 'MB', x: 52, y: 70 }, // OPP
+        { label: 'LB', x: 26, y: 70 }, // M1
+        { label: 'LF', x: 22, y: 24 }  // OH1
       ],
-      // Rotation 6: front MB-OH1-S, back OH2-OPP-L
+      // Rotation 6: front M1-OH1-S1, back OPP-OH2-M2
       [
-        { label: 'LB', x: 32, y: 60 }, // OH2
-        { label: 'RF', x: 74, y: 22 }, // S
-        { label: 'MF', x: 60, y: 44 }, // OPP
-        { label: 'LF', x: 26, y: 22 }, // MB
-        { label: 'MB', x: 48, y: 22 }, // OH1
-        { label: 'RB', x: 84, y: 88 }  // L
+        { label: 'RB', x: 84, y: 92 }, // M2 (server)
+        { label: 'RF', x: 76, y: 24 }, // S1
+        { label: 'LB', x: 26, y: 70 }, // OPP
+        { label: 'LF', x: 22, y: 24 }, // M1
+        { label: 'MF', x: 50, y: 20 }, // OH1
+        { label: 'MB', x: 52, y: 70 }  // OH2
       ]
     ],
     receive: [
-      // Rotation 1 receive: front OPP-MB-OH1, back OH2-L-S up
+      // Rotation 1 receive: front OPP-M1-OH1, back OH2-M2-S1 (setter deep)
       [
-        { label: 'RB', x: 86, y: 60 }, // S
-        { label: 'LF', x: 26, y: 34 }, // OPP
-        { label: 'MF', x: 50, y: 30 }, // MB
-        { label: 'RF', x: 78, y: 34 }, // OH1
-        { label: 'MB', x: 52, y: 70 }, // L
-        { label: 'LB', x: 32, y: 68 }  // OH2
+        { label: 'RB', x: 88, y: 78 }, // S1
+        { label: 'LF', x: 22, y: 28 }, // OPP
+        { label: 'MF', x: 50, y: 24 }, // M1
+        { label: 'RF', x: 76, y: 48 }, // OH1
+        { label: 'LB', x: 26, y: 60 }, // OH2
+        { label: 'MB', x: 52, y: 60 }  // M2
       ],
-      // Rotation 2 receive: OH2 left, OPP front right stack with S, MB right back, OH1 mid, L middle
+      // Rotation 2 receive: S1 up over OPP, passers M2-OH1-OH2
       [
-        { label: 'RF', x: 70, y: 38 }, // OPP
-        { label: 'RB', x: 86, y: 64 }, // MB
-        { label: 'MB', x: 44, y: 72 }, // OH1
-        { label: 'MB2', x: 52, y: 64 }, // L
-        { label: 'LF', x: 28, y: 44 }, // OH2
-        { label: 'RS', x: 76, y: 50 }  // S
+        { label: 'MF', x: 50, y: 30 }, // OPP
+        { label: 'RF', x: 76, y: 24 }, // M1
+        { label: 'RB', x: 82, y: 62 }, // OH1
+        { label: 'LF', x: 24, y: 46 }, // OH2
+        { label: 'LB', x: 26, y: 62 }, // M2
+        { label: 'SR', x: 66, y: 40 }  // S1
       ],
-      // Rotation 3 receive: L left, OH2 right, S mid, OPP right, OH1 mid, MB right
+      // Rotation 3 receive: S1 left, OH2 back-middle switch, M2 tight left
       [
-        { label: 'RB', x: 82, y: 70 }, // MB
-        { label: 'MB', x: 52, y: 50 }, // OH1
-        { label: 'LF', x: 24, y: 26 }, // L
-        { label: 'RF', x: 70, y: 26 }, // OH2
-        { label: 'RS', x: 46, y: 44 }, // S
-        { label: 'FR', x: 86, y: 44 }  // OPP
+        { label: 'RB', x: 88, y: 86 }, // M1
+        { label: 'BR', x: 72, y: 66 }, // OH1
+        { label: 'MB', x: 52, y: 62 }, // OH2
+        { label: 'LF', x: 18, y: 24 }, // M2
+        { label: 'LB', x: 26, y: 70 }, // S1
+        { label: 'RF', x: 78, y: 28 }  // OPP
       ],
-      // Rotation 4 receive: S far left, L left-mid, OH2 mid; back OH1, MB, OPP right
+      // Rotation 4 receive: S1 far left, passers OH1-M1-OH2
       [
-        { label: 'LB', x: 52, y: 48 }, // OH1
-        { label: 'MF', x: 32, y: 34 }, // L
-        { label: 'RF', x: 28, y: 44 }, // OH2
-        { label: 'LF', x: 10, y: 34 }, // S
-        { label: 'RB', x: 86, y: 54 }, // OPP
-        { label: 'MB', x: 66, y: 46 }  // MB
+        { label: 'LB', x: 30, y: 72 }, // OH1
+        { label: 'RF', x: 68, y: 46 }, // OH2
+        { label: 'MF', x: 50, y: 24 }, // M2
+        { label: 'LF', x: 8, y: 34 },  // S1
+        { label: 'RB', x: 86, y: 86 }, // OPP
+        { label: 'MB', x: 52, y: 62 }  // M1
       ],
-      // Rotation 5 receive: front OH1-OPP-OH2, back S-L-MB
+      // Rotation 5 receive: front OH1-S1-M2, back M1-OPP-OH2 pass
       [
-        { label: 'LB', x: 68, y: 64 }, // L
-        { label: 'RB', x: 82, y: 60 }, // OH2
-        { label: 'MB', x: 72, y: 28 }, // S
-        { label: 'FR', x: 64, y: 44 }, // OPP
-        { label: 'MB2', x: 44, y: 54 }, // MB
-        { label: 'LF', x: 28, y: 34 }  // OH1
+        { label: 'RB', x: 82, y: 62 }, // OH2
+        { label: 'RF', x: 76, y: 24 }, // M2
+        { label: 'MF', x: 50, y: 20 }, // S1
+        { label: 'MB', x: 52, y: 62 }, // OPP
+        { label: 'LB', x: 26, y: 62 }, // M1
+        { label: 'LF', x: 22, y: 24 }  // OH1
       ],
-      // Rotation 6 receive: front OH2-OPP-MB, back OH1-S-L
+      // Rotation 6 receive: S1 front-right, M1 drops to pass with OPP/OH2
       [
-        { label: 'LF', x: 32, y: 32 }, // OH2
-        { label: 'RF', x: 72, y: 60 }, // S
-        { label: 'MF', x: 64, y: 36 }, // OPP
-        { label: 'MB', x: 24, y: 36 }, // MB
-        { label: 'LB', x: 48, y: 60 }, // OH1
-        { label: 'RB', x: 82, y: 70 }  // L
+        { label: 'RB', x: 84, y: 80 }, // M2
+        { label: 'RF', x: 76, y: 24 }, // S1
+        { label: 'LB', x: 22, y: 68 }, // OPP
+        { label: 'LM', x: 34, y: 52 }, // M1
+        { label: 'MF', x: 50, y: 22 }, // OH1
+        { label: 'MB', x: 52, y: 62 }  // OH2
       ]
     ]
   };
 
-  // 5-1: one setter, two outsides, one opposite, one middle, one libero.
+  // Front/back row slots for each rotation index (lineup order).
+  const rowMap = [
+    ['back', 'front', 'front', 'front', 'back', 'back'],
+    ['front', 'front', 'back', 'front', 'back', 'back'],
+    ['back', 'back', 'front', 'front', 'back', 'front'],
+    ['back', 'front', 'front', 'front', 'back', 'back'],
+    ['back', 'front', 'front', 'back', 'back', 'front'],
+    ['back', 'front', 'back', 'front', 'front', 'back']
+  ];
+
+  // 5-1: one setter, two outsides, one opposite, two middles.
   const defaultLineup = [
-    { id: 'p1', role: 'S', name: 'Nasrul' },
+    { id: 'p1', role: 'S1', name: 'Nasrul' },
     { id: 'p2', role: 'OPP', name: 'Akip' },
-    { id: 'p3', role: 'MB', name: 'Bazli' },
+    { id: 'p3', role: 'M1', name: 'Bazli' },
     { id: 'p4', role: 'OH1', name: 'Luqman' },
-    { id: 'p5', role: 'L', name: 'Zahirah' },
-    { id: 'p6', role: 'OH2', name: 'Rahman' }
+    { id: 'p5', role: 'OH2', name: 'Rahman' },
+    { id: 'p6', role: 'M2', name: 'Zahirah' }
   ];
 
   const defaultBench = [
     { id: 'p7', role: 'OPP', name: 'Atiq' },
     { id: 'p8', role: 'OH1', name: 'Sulaiman' },
-    { id: 'p9', role: 'L', name: 'Aimi' },
-    { id: 'p10', role: 'L', name: 'Aiman' },
+    { id: 'p9', role: 'M1', name: 'Aimi' },
+    { id: 'p10', role: 'M2', name: 'Aiman' },
     { id: 'p11', role: 'OH2', name: 'Akip' }
   ];
 
   // Official serving order starting from rotation 1 (setter in 1).
-  const serveOrder = ['S', 'OH1', 'MB', 'OPP', 'OH2', 'L'];
+  const serveOrder = ['S1', 'OH1', 'M1', 'OPP', 'OH2', 'M2'];
 
   const positions = ['1 (RB)', '2 (RF)', '3 (MF)', '4 (LF)', '5 (LB)', '6 (MB)'];
   const scores = { us: 0, opp: 0 };
@@ -200,7 +210,8 @@
     lineup.forEach((player, index) => {
       const spot = layout[index];
       const btn = document.createElement('button');
-      const classes = ['player', index >= 1 && index <= 3 ? 'front-row' : 'back-row'];
+      const rowClass = rowMap[rotationIndex][index] === 'front' ? 'front-row' : 'back-row';
+      const classes = ['player', rowClass];
       if (selectedOnCourt === player.id) classes.push('selected');
       btn.className = classes.join(' ');
       btn.style.left = `${spot.x}%`;
