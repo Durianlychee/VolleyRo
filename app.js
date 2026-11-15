@@ -221,7 +221,6 @@
       if (selected) classes.push('selected');
       if (serverId === player.id) classes.push('serving');
       btn.className = classes.join(' ');
-      btn.setAttribute('aria-pressed', selected ? 'true' : 'false');
       btn.style.setProperty('--x', String(spot.x));
       btn.style.setProperty('--y', String(spot.y));
       const serverBadge = serverId === player.id ? '<span class="server-badge">Serving</span>' : '';

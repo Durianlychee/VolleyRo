@@ -550,62 +550,7 @@ button:disabled {
   }
 
   .shell {
-    padding: 0 16px 16px;
-  }
-
-  /* Phone: compact scoreboard and phase control stay pinned at the top. */
-  .hero {
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    grid-template-columns: auto 1fr;
-    grid-template-areas:
-      "brand mode"
-      "score score";
-    gap: 8px 12px;
-    margin: 0 -16px 12px;
-    padding: 8px 16px;
-    background: var(--bg);
-    border-bottom: 1px solid var(--border);
-    box-shadow: 0 6px 16px var(--shadow);
-  }
-
-  .brand {
-    grid-area: brand;
-    align-self: center;
-  }
-
-  .brand .muted {
-    display: none;
-  }
-
-  .brand-mark {
-    font-size: 18px;
-  }
-
-  .mode-panel {
-    grid-area: mode;
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-  }
-
-  .mode-panel .tiny {
-    display: none;
-  }
-
-  .mode-pill {
-    padding: 6px 10px;
-  }
-
-  .mode-panel .ghost {
-    padding: 8px 10px;
-  }
-
-  .scoreboard {
-    grid-area: score;
-    padding: 6px 12px;
-    box-shadow: none;
+    padding: 16px;
   }
 
   .court-card {
