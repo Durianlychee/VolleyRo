@@ -57,8 +57,9 @@
             <div class="badge">Points</div>
           </div>
           <div class="rally-buttons">
-            <button class="win" id="log-win">We won the rally</button>
-            <button class="loss" id="log-loss">They won the rally</button>
+            <button class="win" id="log-win"><span class="label-long">We won the rally</span><span class="label-short">+1 Us</span></button>
+            <button class="loss" id="log-loss"><span class="label-long">They won the rally</span><span class="label-short">+1 Opp</span></button>
+            <button class="ghost undo" id="undo-rally" disabled><span class="label-long">Undo last rally</span><span class="label-short">Undo</span></button>
           </div>
           <div class="log-toggle">
             <p class="muted" id="context-line">Starting in receive. Win a rally to rotate and gain serve.</p>
@@ -88,7 +89,7 @@
               <select id="bench-select"></select>
             </label>
             <button id="make-sub">Sub in</button>
-            <p class="status" id="sub-status"></p>
+            <p class="status" id="sub-status" aria-live="polite"></p>
           </div>
           <div class="bench" id="bench-list"></div>
         </div>

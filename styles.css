@@ -10,7 +10,10 @@
   --text: #1f2733;
   --muted: #5a6472;
   --border: #d1d6de;
-  --front-surface: #dfe8f1;
+  --accent-ink: #336b8f;
+  --loss-ink: #a8434f;
+  --front-surface: #336b8f;
+  --front-text: #ffffff;
   --back-surface: #e8edf4;
   --shadow: rgba(24, 32, 43, 0.16);
   --win: #7bbf96;
@@ -55,7 +58,7 @@ p {
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  background: linear-gradient(90deg, var(--accent-ink), #4a84a8);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -86,7 +89,9 @@ p {
 }
 
 .mode-pill[data-state="serve"] {
-  background: rgba(183, 214, 232, 0.5);
+  background: var(--accent-ink);
+  border-color: var(--accent-ink);
+  color: #ffffff;
 }
 
 .scoreboard {
@@ -151,10 +156,22 @@ p {
   flex-wrap: wrap;
 }
 
+/*
+ * The court box is the playing area (x/y percentages from app.js) plus a
+ * service-zone strip below it, so the server's card is never cut off.
+ * --play is the playing area's height as a fraction of the court width,
+ * --strip the extra height below it. Player cards are 15% of the court width
+ * by 15% of the playing-area height; every pair of spots in the 12 layouts is
+ * at least 16% apart on one axis, so cards cannot overlap.
+ */
 .court {
+  --play: 0.78;
+  --strip: 0.1;
+  --play-frac: calc(var(--play) / (var(--play) + var(--strip)));
   position: relative;
-  min-height: 440px;
-  background: linear-gradient(180deg, var(--court-a) 0%, var(--court-a) 50%, var(--court-b) 50%, var(--court-b) 100%);
+  container-type: inline-size;
+  aspect-ratio: 1 / calc(var(--play) + var(--strip));
+  background: linear-gradient(180deg, var(--court-a) 0%, var(--court-a) calc(50% * var(--play-frac)), var(--court-b) calc(50% * var(--play-frac)), var(--court-b) 100%);
   border-radius: 20px;
   border: 2px solid var(--border);
   overflow: hidden;
@@ -164,7 +181,7 @@ p {
 .court::before {
   content: "";
   position: absolute;
-  top: 50%;
+  top: calc(50% * var(--play-frac));
   left: 0;
   right: 0;
   height: 2px;
@@ -177,28 +194,44 @@ p {
   position: absolute;
   left: 0;
   right: 0;
-  top: 64%;
+  top: calc(64% * var(--play-frac));
   height: 2px;
   background: rgba(154, 168, 186, 0.4);
 }
 
 .player {
+  --tok-w: 15cqw;
+  --tok-h: calc(15cqw * var(--play));
   position: absolute;
+  left: clamp(calc(var(--tok-w) / 2), calc(var(--x) * 1%), calc(100% - var(--tok-w) / 2));
+  top: clamp(calc(var(--tok-h) / 2), calc(var(--y) * var(--play) * 1cqw), calc(100% - var(--tok-h) / 2));
   transform: translate(-50%, -50%);
-  width: 96px;
-  height: 96px;
-  border-radius: 16px;
+  width: var(--tok-w);
+  height: var(--tok-h);
+  border-radius: clamp(8px, 2cqw, 16px);
   background: var(--back-surface);
   border: 2px solid transparent;
   color: var(--text);
-  padding: 10px 12px;
-  display: grid;
-  grid-template-rows: auto auto 1fr;
-  gap: 4px;
+  padding: clamp(2px, 0.8cqw, 8px) clamp(2px, 1cqw, 10px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: clamp(1px, 0.4cqw, 4px);
+  overflow: hidden;
+  font-size: clamp(10px, 2cqw, 14px);
+  line-height: 1.2;
   text-align: left;
-  box-shadow: 0 12px 24px rgba(24, 32, 43, 0.2);
+  box-shadow: 0 8px 18px rgba(24, 32, 43, 0.18);
   cursor: pointer;
   transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.2s ease;
+}
+
+.player > span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .player:hover {
@@ -207,14 +240,12 @@ p {
 }
 
 .player .role {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
+  display: inline-block;
+  padding: 1px clamp(4px, 1cqw, 8px);
   border-radius: 999px;
   background: rgba(183, 214, 232, 0.55);
   color: var(--text);
-  font-size: 13px;
+  font-size: 0.95em;
   font-weight: 700;
 }
 
@@ -224,32 +255,67 @@ p {
 
 .player .pos-label {
   color: var(--muted);
-  font-size: 12px;
-}
-
-.player.selected {
-  border-color: var(--accent);
-  box-shadow: 0 14px 28px rgba(107, 163, 196, 0.3);
-}
-
-.player.front-row {
-  background: var(--front-surface);
-  border-color: rgba(107, 163, 196, 0.4);
+  font-size: 0.9em;
 }
 
 .player.back-row {
   background: var(--back-surface);
 }
 
+.player.front-row {
+  background: var(--front-surface);
+  color: var(--front-text);
+}
+
+.player.front-row .role {
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--front-text);
+}
+
+.player.front-row .pos-label {
+  color: var(--front-text);
+}
+
+.player.selected {
+  border-color: var(--text);
+  box-shadow: 0 10px 22px rgba(24, 32, 43, 0.3);
+}
+
+/*
+ * The server's card grows to fit the badge; the service-zone strip gives it room.
+ * The server stands alone at the back right, so a wider card overlaps no one.
+ */
+.player.serving {
+  width: auto;
+  min-width: var(--tok-w);
+  max-width: 24cqw;
+  height: auto;
+  min-height: var(--tok-h);
+}
+
 .server-badge {
-  display: inline-flex;
-  margin-top: 2px;
-  padding: 4px 8px;
+  display: inline-block;
+  padding: 1px clamp(4px, 1cqw, 8px);
   border-radius: 10px;
   background: rgba(107, 163, 196, 0.6);
   color: var(--text);
   font-weight: 800;
-  font-size: 12px;
+  font-size: 0.9em;
+}
+
+@container (max-width: 520px) {
+  .player {
+    padding: 2px 1px;
+    border-width: 1.5px;
+  }
+
+  .player .name {
+    letter-spacing: -0.03em;
+  }
+
+  .player .pos-rot {
+    display: none;
+  }
 }
 
 .stack {
@@ -323,9 +389,23 @@ button:active {
 
 .rally-buttons {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   margin-bottom: 10px;
+}
+
+.rally-buttons .undo {
+  grid-column: 1 / -1;
+}
+
+.label-short {
+  display: none;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .win {
@@ -441,11 +521,11 @@ button:active {
 }
 
 .status[data-tone="alert"] {
-  color: var(--loss);
+  color: var(--loss-ink);
 }
 
 .status[data-tone="info"] {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 @media (max-width: 960px) {
@@ -464,11 +544,109 @@ button:active {
 }
 
 @media (max-width: 640px) {
+  body {
+    /* Room for the fixed rally bar at the bottom. */
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+
   .shell {
-    padding: 16px;
+    padding: 0 16px 16px;
+  }
+
+  /* Phone: compact scoreboard and phase control stay pinned at the top. */
+  .hero {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      "brand mode"
+      "score score";
+    gap: 8px 12px;
+    margin: 0 -16px 12px;
+    padding: 8px 16px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 6px 16px var(--shadow);
+  }
+
+  .brand {
+    grid-area: brand;
+    align-self: center;
+  }
+
+  .brand .muted {
+    display: none;
+  }
+
+  .brand-mark {
+    font-size: 18px;
+  }
+
+  .mode-panel {
+    grid-area: mode;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .mode-panel .tiny {
+    display: none;
+  }
+
+  .mode-pill {
+    padding: 6px 10px;
+  }
+
+  .mode-panel .ghost {
+    padding: 8px 10px;
+  }
+
+  .scoreboard {
+    grid-area: score;
+    padding: 6px 12px;
+    box-shadow: none;
+  }
+
+  .court-card {
+    padding: 12px;
   }
 
   .court {
-    min-height: 360px;
+    --play: 1.2;
+    --strip: 0.1;
+  }
+
+  /* Phone: rally buttons become a fixed thumb bar so they never need scrolling. */
+  .rally-buttons {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    margin: 0;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+    grid-template-columns: 1fr 1fr auto;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -8px 24px var(--shadow);
+  }
+
+  .rally-buttons button {
+    min-height: 60px;
+    font-size: 17px;
+  }
+
+  .rally-buttons .undo {
+    grid-column: auto;
+    padding: 10px 16px;
+  }
+
+  .label-long {
+    display: none;
+  }
+
+  .label-short {
+    display: inline;
   }
 }
