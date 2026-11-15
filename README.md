@@ -34,3 +34,6 @@ Solo volleyball rotation, substitution, and rally tracker built as a lightweight
 ## Notes
 - No persistence is built in; each browser session starts clean.
 - Tested on modern evergreen browsers; no additional setup required.
+
+## Licence
+Released under the MIT License; see [LICENSE](LICENSE).
