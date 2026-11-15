@@ -3,7 +3,7 @@
 Solo volleyball rotation, substitution, and rally tracker built as a lightweight single-page app.
 
 ## Features
-- Interactive court map with serve/receive layouts for each 5-1 rotation (S, OPP, MB, OH1, L, OH2), matching diagrammed lanes.
+- Interactive court map with serve/receive layouts for each 5-1 rotation (S1, OH1, M1, OPP, OH2, M2), matching diagrammed lanes.
 - Manual rotation, serve/receive toggle, and scoreboard with a session reset that asks for confirmation.
 - Substitutions between on-court slots and bench players with instant lineup refresh.
 - Rally tracker with win/loss logging, score updates, undo of the last rally, collapsible recent log, and rotation awareness in the log.
@@ -21,7 +21,7 @@ Solo volleyball rotation, substitution, and rally tracker built as a lightweight
 
 ## Usage
 - Court: Tap a player card on the court to select them, then use the substitution controls to swap with a bench player.
-- Serve/receive layouts: Rotation index updates when you rotate; serve/receive positions update to the matching diagrammed pattern. Libero tracks the back-row middle/defense spots.
+- Serve/receive layouts: Rotation index updates when you rotate; serve/receive positions update to the matching diagrammed pattern.
 - Serve/receive toggle: Use the header toggle or the court controls to switch phases; manual rotate is available for side-outs.
 - Rally tracking: Press win/loss buttons to update scores; when you win in receive the lineup auto-rotates and you gain serve. On a phone these buttons sit in a bar pinned to the bottom of the screen.
 - Undo: "Undo last rally" restores the score, lineup, rotation and serve/receive phase from just before the most recent logged rally (a substitution made after that rally is undone too). Press it again to step further back.
@@ -29,7 +29,7 @@ Solo volleyball rotation, substitution, and rally tracker built as a lightweight
 - Reset: "Reset session" asks for confirmation, then clears scores, history and undo, and returns to the default lineup in receive (Rotation 1).
 
 ## Customization Ideas
-- Edit `defaultLineup` and `defaultBench` in `app.js` to rename players (`defaultLineup` is listed in rotational-position order for Rotation 1: position 1, the server, first), or adjust L vs. MB usage if you want a true M2 instead of libero coverage.
+- Edit `defaultLineup` and `defaultBench` in `app.js` to rename players (`defaultLineup` is listed in rotational-position order for Rotation 1: position 1, the server, first).
 - Adjust colors in `styles.css` by editing the CSS variables in the `:root` block.
 
 ## Tests
