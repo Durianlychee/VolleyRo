@@ -1,138 +1,146 @@
 ﻿(() => {
-  // Rotation-specific layouts (serve/receive) for a 5-1 with S1, OPP, M1, OH1, OH2, M2.
-  // Coordinates are percentage-based for the court container.
-  // Lineup rotates; rotationIndex selects the matching rotation pattern.
+  // The lineup is stored in rotational-position order: lineup[i] is the player
+  // in position i + 1 (1 = right back, the server; 2 = right front; ... 6 = middle back).
+  // Rotating clockwise moves everyone down one position, so position 2 becomes the
+  // next server and position 1 moves to position 6.
+  const POSITIONS = [
+    { num: 1, code: 'RB' },
+    { num: 2, code: 'RF' },
+    { num: 3, code: 'MF' },
+    { num: 4, code: 'LF' },
+    { num: 5, code: 'LB' },
+    { num: 6, code: 'MB' }
+  ];
+
+  // Positions 2, 3 and 4 are the front row; 1, 5 and 6 the back row.
+  const FRONT_ROW = new Set([2, 3, 4]);
+
+  // Where each rotational position stands, per rotation, for serve and receive.
+  // layouts[mode][rotationIndex][i] is the spot for position i + 1.
+  // Coordinates are percentages of the playing area: x left -> right, y net -> end line.
+  // The comments name who stands there with the default 5-1 lineup.
   const layouts = {
     serve: [
       // Rotation 1: front OPP-M1-OH1, back OH2-M2-S1
       [
-        { label: 'RB', x: 84, y: 92 }, // S1 (server)
-        { label: 'LF', x: 22, y: 24 }, // OPP
-        { label: 'MF', x: 50, y: 20 }, // M1
-        { label: 'RF', x: 76, y: 24 }, // OH1
-        { label: 'LB', x: 26, y: 60 }, // OH2 (up to attack line)
-        { label: 'MB', x: 52, y: 60 }  // M2 (up to attack line)
+        { x: 84, y: 92 }, // 1 RB: S1 (server)
+        { x: 76, y: 24 }, // 2 RF: OH1
+        { x: 50, y: 20 }, // 3 MF: M1
+        { x: 22, y: 24 }, // 4 LF: OPP
+        { x: 26, y: 60 }, // 5 LB: OH2 (up to attack line)
+        { x: 52, y: 60 } // 6 MB: M2 (up to attack line)
       ],
       // Rotation 2: front OH2-OPP-M1, back M2-S1-OH1
       [
-        { label: 'MF', x: 50, y: 24 }, // OPP
-        { label: 'RF', x: 76, y: 24 }, // M1
-        { label: 'RB', x: 84, y: 92 }, // OH1 (server)
-        { label: 'LF', x: 22, y: 24 }, // OH2
-        { label: 'LB', x: 26, y: 70 }, // M2
-        { label: 'MB', x: 52, y: 70 }  // S1
+        { x: 84, y: 92 }, // 1 RB: OH1 (server)
+        { x: 76, y: 24 }, // 2 RF: M1
+        { x: 50, y: 24 }, // 3 MF: OPP
+        { x: 22, y: 24 }, // 4 LF: OH2
+        { x: 26, y: 70 }, // 5 LB: M2
+        { x: 52, y: 70 } // 6 MB: S1
       ],
       // Rotation 3: front M2-OH2-OPP, back S1-OH1-M1
       [
-        { label: 'RB', x: 84, y: 92 }, // M1 (server)
-        { label: 'MB', x: 58, y: 70 }, // OH1
-        { label: 'MF', x: 56, y: 22 }, // OH2
-        { label: 'LF', x: 30, y: 24 }, // M2
-        { label: 'LB', x: 40, y: 70 }, // S1
-        { label: 'RF', x: 82, y: 26 }  // OPP
+        { x: 84, y: 92 }, // 1 RB: M1 (server)
+        { x: 82, y: 26 }, // 2 RF: OPP
+        { x: 56, y: 22 }, // 3 MF: OH2
+        { x: 30, y: 24 }, // 4 LF: M2
+        { x: 40, y: 70 }, // 5 LB: S1
+        { x: 58, y: 70 } // 6 MB: OH1
       ],
       // Rotation 4: front S1-M2-OH2, back OH1-M1-OPP
       [
-        { label: 'LB', x: 26, y: 70 }, // OH1
-        { label: 'RF', x: 76, y: 24 }, // OH2
-        { label: 'MF', x: 50, y: 20 }, // M2
-        { label: 'LF', x: 22, y: 24 }, // S1
-        { label: 'RB', x: 84, y: 92 }, // OPP (server)
-        { label: 'MB', x: 52, y: 70 }  // M1
+        { x: 84, y: 92 }, // 1 RB: OPP (server)
+        { x: 76, y: 24 }, // 2 RF: OH2
+        { x: 50, y: 20 }, // 3 MF: M2
+        { x: 22, y: 24 }, // 4 LF: S1
+        { x: 26, y: 70 }, // 5 LB: OH1
+        { x: 52, y: 70 } // 6 MB: M1
       ],
       // Rotation 5: front OH1-S1-M2, back M1-OPP-OH2
       [
-        { label: 'RB', x: 84, y: 92 }, // OH2 (server)
-        { label: 'RF', x: 76, y: 24 }, // M2
-        { label: 'MF', x: 50, y: 20 }, // S1
-        { label: 'MB', x: 52, y: 70 }, // OPP
-        { label: 'LB', x: 26, y: 70 }, // M1
-        { label: 'LF', x: 22, y: 24 }  // OH1
+        { x: 84, y: 92 }, // 1 RB: OH2 (server)
+        { x: 76, y: 24 }, // 2 RF: M2
+        { x: 50, y: 20 }, // 3 MF: S1
+        { x: 22, y: 24 }, // 4 LF: OH1
+        { x: 26, y: 70 }, // 5 LB: M1
+        { x: 52, y: 70 } // 6 MB: OPP
       ],
       // Rotation 6: front M1-OH1-S1, back OPP-OH2-M2
       [
-        { label: 'RB', x: 84, y: 92 }, // M2 (server)
-        { label: 'RF', x: 76, y: 24 }, // S1
-        { label: 'LB', x: 26, y: 70 }, // OPP
-        { label: 'LF', x: 22, y: 24 }, // M1
-        { label: 'MF', x: 50, y: 20 }, // OH1
-        { label: 'MB', x: 52, y: 70 }  // OH2
+        { x: 84, y: 92 }, // 1 RB: M2 (server)
+        { x: 76, y: 24 }, // 2 RF: S1
+        { x: 50, y: 20 }, // 3 MF: OH1
+        { x: 22, y: 24 }, // 4 LF: M1
+        { x: 26, y: 70 }, // 5 LB: OPP
+        { x: 52, y: 70 } // 6 MB: OH2
       ]
     ],
     receive: [
       // Rotation 1 receive: front OPP-M1-OH1, back OH2-M2-S1 (setter deep)
       [
-        { label: 'RB', x: 88, y: 78 }, // S1
-        { label: 'LF', x: 22, y: 28 }, // OPP
-        { label: 'MF', x: 50, y: 24 }, // M1
-        { label: 'RF', x: 76, y: 48 }, // OH1
-        { label: 'LB', x: 26, y: 60 }, // OH2
-        { label: 'MB', x: 52, y: 60 }  // M2
+        { x: 88, y: 78 }, // 1 RB: S1
+        { x: 76, y: 48 }, // 2 RF: OH1
+        { x: 50, y: 24 }, // 3 MF: M1
+        { x: 22, y: 28 }, // 4 LF: OPP
+        { x: 26, y: 60 }, // 5 LB: OH2
+        { x: 52, y: 60 } // 6 MB: M2
       ],
       // Rotation 2 receive: S1 up over OPP, passers M2-OH1-OH2
       [
-        { label: 'MF', x: 50, y: 30 }, // OPP
-        { label: 'RF', x: 76, y: 24 }, // M1
-        { label: 'RB', x: 82, y: 62 }, // OH1
-        { label: 'LF', x: 24, y: 46 }, // OH2
-        { label: 'LB', x: 26, y: 62 }, // M2
-        { label: 'SR', x: 66, y: 40 }  // S1
+        { x: 82, y: 62 }, // 1 RB: OH1
+        { x: 76, y: 24 }, // 2 RF: M1
+        { x: 50, y: 30 }, // 3 MF: OPP
+        { x: 24, y: 46 }, // 4 LF: OH2
+        { x: 26, y: 62 }, // 5 LB: M2
+        { x: 66, y: 40 } // 6 MB: S1
       ],
       // Rotation 3 receive: S1 left, OH2 back-middle switch, M2 tight left
       [
-        { label: 'RB', x: 88, y: 86 }, // M1
-        { label: 'BR', x: 72, y: 66 }, // OH1
-        { label: 'MB', x: 52, y: 62 }, // OH2
-        { label: 'LF', x: 18, y: 24 }, // M2
-        { label: 'LB', x: 26, y: 70 }, // S1
-        { label: 'RF', x: 78, y: 28 }  // OPP
+        { x: 88, y: 86 }, // 1 RB: M1
+        { x: 78, y: 28 }, // 2 RF: OPP
+        { x: 52, y: 62 }, // 3 MF: OH2
+        { x: 18, y: 24 }, // 4 LF: M2
+        { x: 26, y: 70 }, // 5 LB: S1
+        { x: 72, y: 66 } // 6 MB: OH1
       ],
       // Rotation 4 receive: S1 far left, passers OH1-M1-OH2
       [
-        { label: 'LB', x: 30, y: 72 }, // OH1
-        { label: 'RF', x: 68, y: 46 }, // OH2
-        { label: 'MF', x: 50, y: 24 }, // M2
-        { label: 'LF', x: 8, y: 34 },  // S1
-        { label: 'RB', x: 86, y: 86 }, // OPP
-        { label: 'MB', x: 52, y: 62 }  // M1
+        { x: 86, y: 86 }, // 1 RB: OPP
+        { x: 68, y: 46 }, // 2 RF: OH2
+        { x: 50, y: 24 }, // 3 MF: M2
+        { x: 8, y: 34 }, //  4 LF: S1
+        { x: 30, y: 72 }, // 5 LB: OH1
+        { x: 52, y: 62 } // 6 MB: M1
       ],
       // Rotation 5 receive: front OH1-S1-M2, back M1-OPP-OH2 pass
       [
-        { label: 'RB', x: 82, y: 62 }, // OH2
-        { label: 'RF', x: 76, y: 24 }, // M2
-        { label: 'MF', x: 50, y: 20 }, // S1
-        { label: 'MB', x: 52, y: 62 }, // OPP
-        { label: 'LB', x: 26, y: 62 }, // M1
-        { label: 'LF', x: 22, y: 24 }  // OH1
+        { x: 82, y: 62 }, // 1 RB: OH2
+        { x: 76, y: 24 }, // 2 RF: M2
+        { x: 50, y: 20 }, // 3 MF: S1
+        { x: 22, y: 24 }, // 4 LF: OH1
+        { x: 26, y: 62 }, // 5 LB: M1
+        { x: 52, y: 62 } // 6 MB: OPP
       ],
       // Rotation 6 receive: S1 front-right, M1 drops to pass with OPP/OH2
       [
-        { label: 'RB', x: 84, y: 80 }, // M2
-        { label: 'RF', x: 76, y: 24 }, // S1
-        { label: 'LB', x: 22, y: 68 }, // OPP
-        { label: 'LM', x: 34, y: 52 }, // M1
-        { label: 'MF', x: 50, y: 22 }, // OH1
-        { label: 'MB', x: 52, y: 62 }  // OH2
+        { x: 84, y: 80 }, // 1 RB: M2
+        { x: 76, y: 24 }, // 2 RF: S1
+        { x: 50, y: 22 }, // 3 MF: OH1
+        { x: 34, y: 52 }, // 4 LF: M1
+        { x: 22, y: 68 }, // 5 LB: OPP
+        { x: 52, y: 62 } // 6 MB: OH2
       ]
     ]
   };
 
-  // Front/back row slots for each rotation index (lineup order).
-  const rowMap = [
-    ['back', 'front', 'front', 'front', 'back', 'back'],
-    ['front', 'front', 'back', 'front', 'back', 'back'],
-    ['back', 'back', 'front', 'front', 'back', 'front'],
-    ['back', 'front', 'front', 'front', 'back', 'back'],
-    ['back', 'front', 'front', 'back', 'back', 'front'],
-    ['back', 'front', 'back', 'front', 'front', 'back']
-  ];
-
-  // 5-1: one setter, two outsides, one opposite, two middles.
+  // 5-1 in rotation 1, listed by position: setter serving in 1, outside hitter in 2,
+  // middle in 3, opposite in 4, outside hitter in 5, middle in 6.
   const defaultLineup = [
     { id: 'p1', role: 'S1', name: 'Nasrul' },
-    { id: 'p2', role: 'OPP', name: 'Akip' },
-    { id: 'p3', role: 'M1', name: 'Bazli' },
     { id: 'p4', role: 'OH1', name: 'Luqman' },
+    { id: 'p3', role: 'M1', name: 'Bazli' },
+    { id: 'p2', role: 'OPP', name: 'Akip' },
     { id: 'p5', role: 'OH2', name: 'Rahman' },
     { id: 'p6', role: 'M2', name: 'Zahirah' }
   ];
@@ -145,12 +153,10 @@
     { id: 'p11', role: 'OH2', name: 'Akip' }
   ];
 
-  // Official serving order starting from rotation 1 (setter in 1).
-  const serveOrder = ['S1', 'OH1', 'M1', 'OPP', 'OH2', 'M2'];
-
-  const positions = ['1 (RB)', '2 (RF)', '3 (MF)', '4 (LF)', '5 (LB)', '6 (MB)'];
   const scores = { us: 0, opp: 0 };
   const rallyHistory = [];
+  // Snapshots of the full match state taken before each logged rally, newest last.
+  const undoStack = [];
   let lineup = [...defaultLineup];
   let bench = [...defaultBench];
   let currentMode = 'receive';
@@ -168,6 +174,7 @@
     scoreOpp: document.getElementById('score-opp'),
     logWin: document.getElementById('log-win'),
     logLoss: document.getElementById('log-loss'),
+    undo: document.getElementById('undo-rally'),
     logList: document.getElementById('rally-log'),
     logSummary: document.getElementById('log-summary'),
     toggleLog: document.getElementById('toggle-log'),
@@ -195,12 +202,9 @@
     setMode(currentMode === 'serve' ? 'receive' : 'serve');
   }
 
-  // Determine who should be serving based on the fixed clockwise order.
+  // The player in position 1 serves (FIVB 12.2.2.2), whatever their role.
   function getServerId() {
-    if (currentMode !== 'serve') return null;
-    const role = serveOrder[rotationIndex % serveOrder.length];
-    const match = lineup.find((player) => player.role === role);
-    return match ? match.id : lineup[0]?.id;
+    return currentMode === 'serve' ? lineup[0].id : null;
   }
 
   function renderCourt() {
@@ -209,18 +213,21 @@
     const serverId = getServerId();
     lineup.forEach((player, index) => {
       const spot = layout[index];
+      const pos = POSITIONS[index];
       const btn = document.createElement('button');
-      const rowClass = rowMap[rotationIndex][index] === 'front' ? 'front-row' : 'back-row';
+      const rowClass = FRONT_ROW.has(pos.num) ? 'front-row' : 'back-row';
       const classes = ['player', rowClass];
-      if (selectedOnCourt === player.id) classes.push('selected');
+      const selected = selectedOnCourt === player.id;
+      if (selected) classes.push('selected');
+      if (serverId === player.id) classes.push('serving');
       btn.className = classes.join(' ');
-      btn.style.left = `${spot.x}%`;
-      btn.style.top = `${spot.y}%`;
+      btn.style.setProperty('--x', String(spot.x));
+      btn.style.setProperty('--y', String(spot.y));
       const serverBadge = serverId === player.id ? '<span class="server-badge">Serving</span>' : '';
       btn.innerHTML = `<span class="role">${player.role}</span>
         <span class="name">${player.name}</span>
         ${serverBadge}
-        <span class="pos-label">${spot.label} · Rot ${rotationIndex + 1}</span>`;
+        <span class="pos-label">${pos.code}<span class="pos-rot"> · Rot ${rotationIndex + 1}</span></span>`;
       btn.addEventListener('click', () => {
         selectedOnCourt = player.id;
         els.onCourtSelect.value = player.id;
@@ -236,12 +243,13 @@
   }
 
   function renderSelects() {
-    const previousChoice = els.onCourtSelect.value || selectedOnCourt;
+    const previousChoice = selectedOnCourt;
     els.onCourtSelect.innerHTML = '';
     lineup.forEach((player, index) => {
       const option = document.createElement('option');
+      const pos = POSITIONS[index];
       option.value = player.id;
-      option.textContent = `${positions[index]} - ${player.role} ${player.name}`;
+      option.textContent = `${pos.num} (${pos.code}) - ${player.role} ${player.name}`;
       els.onCourtSelect.appendChild(option);
     });
     const chosen = lineup.find((p) => p.id === previousChoice);
@@ -320,6 +328,10 @@
     els.subStatus.dataset.tone = tone;
   }
 
+  function updateUndo() {
+    els.undo.disabled = undoStack.length === 0;
+  }
+
   function rotateLineup() {
     const moved = lineup.shift();
     lineup.push(moved);
@@ -353,7 +365,20 @@
     renderCourt();
   }
 
+  function snapshot() {
+    return {
+      scores: { ...scores },
+      lineup: [...lineup],
+      bench: [...bench],
+      rotationIndex,
+      currentMode,
+      selectedOnCourt,
+      rallyHistory: rallyHistory.map((item) => ({ ...item }))
+    };
+  }
+
   function logRally(won) {
+    undoStack.push(snapshot());
     const before = currentMode;
     if (won) {
       scores.us += 1;
@@ -388,12 +413,47 @@
     }
     renderLog();
     updateContext();
+    updateUndo();
+  }
+
+  // Restore the score, lineup, bench, rotation and serve/receive phase from
+  // just before the most recent logged rally.
+  function undoRally() {
+    const prior = undoStack.pop();
+    if (!prior) {
+      setStatus('Nothing to undo yet.', 'muted');
+      updateUndo();
+      return;
+    }
+    scores.us = prior.scores.us;
+    scores.opp = prior.scores.opp;
+    lineup = prior.lineup;
+    bench = prior.bench;
+    rotationIndex = prior.rotationIndex;
+    selectedOnCourt = prior.selectedOnCourt;
+    rallyHistory.length = 0;
+    rallyHistory.push(...prior.rallyHistory);
+    setMode(prior.currentMode);
+    renderScores();
+    renderSelects();
+    renderBench();
+    renderCourt();
+    renderLog();
+    updateUndo();
+    const phase = prior.currentMode === 'serve' ? 'serving' : 'receiving';
+    setStatus(`Undid last rally: ${scores.us}-${scores.opp}, Rotation ${rotationIndex + 1}, ${phase}.`, 'info');
   }
 
   function resetMatch() {
+    const confirmed = confirm('Reset the session? This clears the score, the rally log and all substitutions.');
+    if (!confirmed) {
+      setStatus('Reset cancelled. Nothing was cleared.', 'muted');
+      return;
+    }
     scores.us = 0;
     scores.opp = 0;
     rallyHistory.length = 0;
+    undoStack.length = 0;
     lineup = [...defaultLineup];
     bench = [...defaultBench];
     rotationIndex = 0;
@@ -404,6 +464,7 @@
     renderBench();
     renderCourt();
     renderLog();
+    updateUndo();
     setStatus('Session reset. Back in receive to start.', 'info');
   }
 
@@ -419,6 +480,7 @@
     els.makeSub.addEventListener('click', makeSubstitution);
     els.logWin.addEventListener('click', () => logRally(true));
     els.logLoss.addEventListener('click', () => logRally(false));
+    els.undo.addEventListener('click', undoRally);
     els.reset.addEventListener('click', resetMatch);
     els.toggleLog.addEventListener('click', toggleLogList);
     els.onCourtSelect.addEventListener('change', (evt) => {
@@ -428,12 +490,14 @@
   }
 
   function renderAll() {
+    setMode(currentMode);
     renderScores();
     renderSelects();
     renderBench();
     renderCourt();
     renderLog();
     updateContext();
+    updateUndo();
     setStatus('Tap a player on court to target them for a sub.', 'info');
   }
 
