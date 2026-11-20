@@ -109,10 +109,24 @@ test('every player label is unique, so no two players can be confused', () => {
   assert.deepEqual([...shown].sort(), [...labels].sort());
 });
 
-test('the app ships no personal names, only role labels', () => {
-  const src = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'app.js'), 'utf8');
-  for (const name of ['Nasrul', 'Luqman', 'Bazli', 'Akip', 'Rahman', 'Zahirah', 'Atiq', 'Sulaiman', 'Aimi', 'Aiman']) {
-    assert.ok(!src.includes(name), `${name} should not appear in app.js`);
+// Oracle: the captain's list of role labels. A real name anywhere in the UI would not be in it.
+test('every name shown in the UI is a role label, through rotations and subs', () => {
+  const app = loadApp();
+  const known = new Set([...STARTER_LABELS, ...BENCH_LABELS]);
+  const shown = () => [
+    ...app.court().map((c) => c.name),
+    ...app.options().map((o) => o.slice(o.indexOf(' - ') + 3).split(' ').slice(1).join(' ')),
+    ...app.bench().map((o) => o.slice(o.indexOf(' ') + 1))
+  ];
+  const check = (msg) => {
+    for (const label of shown()) assert.ok(known.has(label), `${msg}: "${label}" is not a role label`);
+  };
+  check('start');
+  for (const [outName, inName] of [['Setter', 'Bench Opposite'], ['Middle 2', 'Bench Middle 2'], ['Outside 2', 'Bench Outside 2']]) {
+    app.sub(outName, inName);
+    check(`after ${inName} in for ${outName}`);
+    app.click('rotate-lineup');
+    check(`rotated after ${inName}`);
   }
 });
 
