@@ -464,6 +464,32 @@ test('SET: first serve alternates between sets (FIVB 12.1)', () => {
   assert.equal(app.court().find((c) => c.serving).name, 'Nasrul');
   winSet(app);
   assert.equal(app.mode(), 'Receive', 'served first in set 2, so receive first in set 3');
+  winSet(app);
+  assert.equal(app.mode(), 'Serve', 'received first in set 3, so serve first in set 4');
+});
+
+test('SET: the deciding set and a new match keep the phase, as a coin toss decides (FIVB 7.1, 12.1)', () => {
+  const app = loadApp();
+  for (let i = 0; i < 3; i += 1) winSet(app);
+  assert.equal(app.setLabel(), 'Set 4');
+  assert.equal(app.mode(), 'Serve', 'received first in set 3, so serve first in set 4');
+  points(app, 25, 0);
+  app.click('next-set');
+  assert.equal(app.setLabel(), 'Set 5');
+  assert.equal(app.mode(), 'Serve', 'served first in set 4, but the deciding set does not alternate');
+  assert.match(app.status(), /coin toss/i);
+  app.click('log-loss'); // lose serve: now receiving
+  points(app, 15, 0);
+  assert.equal(app.mode(), 'Serve', 'won the fifth set while serving');
+  app.click('next-set');
+  assert.equal(app.setLabel(), 'Set 1');
+  assert.equal(app.mode(), 'Serve', 'a new match keeps the current phase');
+  assert.match(app.status(), /coin toss/i);
+  points(app, 25, 0);
+  app.click('next-set');
+  assert.equal(app.setLabel(), 'Set 2');
+  assert.equal(app.mode(), 'Receive', 'served first in set 1, so receive first in set 2');
+  assert.doesNotMatch(app.status(), /coin toss/i);
 });
 
 test('SET: the fifth set is won at 15 with a two-point lead', () => {

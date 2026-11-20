@@ -163,7 +163,8 @@
   // Only the current set number is tracked, so the fifth-set target applies.
   let setNumber = 1;
   // The phase (serve or receive) we were in for the set's first rally. FIVB 12.1:
-  // the team that did not serve first in one set serves first in the next.
+  // the team that did not serve first in one set serves first in the next, except
+  // the deciding set and a new match, where a coin toss decides.
   let setStartMode = null;
   const rallyHistory = [];
   // Snapshots of the full match state taken before each logged rally, newest last.
@@ -484,12 +485,14 @@
 
   // Start the next set (or, after the fifth, a new match at set 1): the score and
   // log clear, players return to their Rotation 1 positions (substitutes stay on),
-  // and the team that received first last set serves first. Undo can step back.
+  // and the team that received first last set serves first (in sets 2 to 4; the
+  // deciding set and a new match keep the phase, as a coin toss decides). Undo can step back.
   function startNextSet() {
     if (!setWinner()) return;
     undoStack.push(snapshot());
-    const nextMode = setStartMode === 'serve' ? 'receive' : 'serve';
     setNumber = setNumber === DECIDING_SET ? 1 : setNumber + 1;
+    const tossDecides = setNumber === 1 || setNumber === DECIDING_SET;
+    const nextMode = tossDecides ? currentMode : setStartMode === 'serve' ? 'receive' : 'serve';
     setStartMode = null;
     scores.us = 0;
     scores.opp = 0;
@@ -506,7 +509,8 @@
     renderLog();
     updateUndo();
     const phase = nextMode === 'serve' ? 'serving' : 'receiving';
-    setStatus(`Set ${setNumber} started: 0-0, Rotation 1, ${phase} first.`, 'info');
+    const toss = tossDecides ? ' A coin toss decides who serves first: use the serve/receive toggle to change it.' : '';
+    setStatus(`Set ${setNumber} started: 0-0, Rotation 1, ${phase} first.${toss}`, 'info');
   }
 
   // Restore the score, set, lineup, bench, rotation and serve/receive phase from
