@@ -19,6 +19,7 @@
         <button class="ghost" id="toggle-mode">Switch to serve</button>
       </div>
       <div class="scoreboard">
+        <div class="set-label" id="set-label">Set 1</div>
         <div class="score-pair">
           <div class="score-label">Us</div>
           <div class="score-value" id="score-us">0</div>
@@ -57,7 +58,11 @@
             </div>
             <div class="badge">Points</div>
           </div>
-          <div class="rally-buttons">
+          <div class="rally-buttons" id="rally-buttons">
+            <div class="set-end is-hidden" id="set-end">
+              <p class="set-end-text" id="set-end-text"></p>
+              <button class="next-set" id="next-set">Start next set</button>
+            </div>
             <button class="win" id="log-win"><span class="label-long">We won the rally</span><span class="label-short">+1 Us</span></button>
             <button class="loss" id="log-loss"><span class="label-long">They won the rally</span><span class="label-short">+1 Opp</span></button>
             <button class="ghost undo" id="undo-rally" disabled><span class="label-long">Undo last rally</span><span class="label-short">Undo</span></button>

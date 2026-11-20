@@ -153,7 +153,18 @@
     { id: 'p11', role: 'OH2', name: 'Akip' }
   ];
 
+  // FIVB 6.2: a set is won by the first team to 25 points with a two-point lead;
+  // the deciding fifth set is played to 15.
+  const SET_TARGET = 25;
+  const DECIDING_SET = 5;
+  const DECIDING_SET_TARGET = 15;
+
   const scores = { us: 0, opp: 0 };
+  // Only the current set number is tracked, so the fifth-set target applies.
+  let setNumber = 1;
+  // The phase (serve or receive) we were in for the set's first rally. FIVB 12.1:
+  // the team that did not serve first in one set serves first in the next.
+  let setStartMode = null;
   const rallyHistory = [];
   // Snapshots of the full match state taken before each logged rally, newest last.
   const undoStack = [];
@@ -185,7 +196,12 @@
     makeSub: document.getElementById('make-sub'),
     subStatus: document.getElementById('sub-status'),
     benchList: document.getElementById('bench-list'),
-    reset: document.getElementById('reset-match')
+    reset: document.getElementById('reset-match'),
+    setLabel: document.getElementById('set-label'),
+    rallyButtons: document.getElementById('rally-buttons'),
+    setEnd: document.getElementById('set-end'),
+    setEndText: document.getElementById('set-end-text'),
+    nextSet: document.getElementById('next-set')
   };
 
   function setMode(mode) {
@@ -253,9 +269,36 @@
     });
   }
 
+  function setTarget() {
+    return setNumber === DECIDING_SET ? DECIDING_SET_TARGET : SET_TARGET;
+  }
+
+  // 'us' or 'opp' once the current set has been won, otherwise null.
+  function setWinner() {
+    const lead = scores.us - scores.opp;
+    if (Math.max(scores.us, scores.opp) < setTarget() || Math.abs(lead) < 2) return null;
+    return lead > 0 ? 'us' : 'opp';
+  }
+
   function renderScores() {
     els.scoreUs.textContent = scores.us;
     els.scoreOpp.textContent = scores.opp;
+    els.setLabel.textContent = `Set ${setNumber}`;
+    renderSetEnd();
+  }
+
+  // When the set is won, swap the rally buttons for the "start next set" prompt.
+  // The state is derived from the score, so undoing the winning point reopens the set.
+  function renderSetEnd() {
+    const winner = setWinner();
+    els.rallyButtons.classList.toggle('set-over', Boolean(winner));
+    els.setEnd.classList.toggle('is-hidden', !winner);
+    els.logWin.disabled = Boolean(winner);
+    els.logLoss.disabled = Boolean(winner);
+    if (!winner) return;
+    const who = winner === 'us' ? 'Us' : 'Opp';
+    els.setEndText.textContent = `Set ${setNumber} won by ${who}, ${scores.us}-${scores.opp}.`;
+    els.nextSet.textContent = setNumber === DECIDING_SET ? 'Start new match' : `Start set ${setNumber + 1}`;
   }
 
   function renderSelects() {
@@ -390,13 +433,17 @@
       rotationIndex,
       currentMode,
       selectedOnCourt,
+      setNumber,
+      setStartMode,
       rallyHistory: rallyHistory.map((item) => ({ ...item }))
     };
   }
 
   function logRally(won) {
+    if (setWinner()) return;
     undoStack.push(snapshot());
     const before = currentMode;
+    if (scores.us + scores.opp === 0) setStartMode = before;
     if (won) {
       scores.us += 1;
       if (before === 'receive') {
@@ -419,7 +466,9 @@
       : before === 'serve'
         ? 'Lost serve -> back to receive.'
         : 'Stayed in receive.';
-    const copy = `${note} ${rotationLabel()}, Mode: ${after}.`;
+    const winner = setWinner();
+    const setNote = winner ? ` Set ${setNumber} won by ${winner === 'us' ? 'Us' : 'Opp'}.` : '';
+    const copy = `${note} ${rotationLabel()}, Mode: ${after}.${setNote}`;
     rallyHistory.unshift({
       won,
       copy,
@@ -433,8 +482,35 @@
     updateUndo();
   }
 
-  // Restore the score, lineup, bench, rotation and serve/receive phase from
-  // just before the most recent logged rally.
+  // Start the next set (or, after the fifth, a new match at set 1): the score and
+  // log clear, players return to their Rotation 1 positions (substitutes stay on),
+  // and the team that received first last set serves first. Undo can step back.
+  function startNextSet() {
+    if (!setWinner()) return;
+    undoStack.push(snapshot());
+    const nextMode = setStartMode === 'serve' ? 'receive' : 'serve';
+    setNumber = setNumber === DECIDING_SET ? 1 : setNumber + 1;
+    setStartMode = null;
+    scores.us = 0;
+    scores.opp = 0;
+    rallyHistory.length = 0;
+    // Undo the clockwise rotations so position 1 again holds the Rotation 1 server.
+    const back = (6 - rotationIndex) % 6;
+    lineup = [...lineup.slice(back), ...lineup.slice(0, back)];
+    rotationIndex = 0;
+    selectedOnCourt = lineup[0].id;
+    setMode(nextMode);
+    renderScores();
+    renderSelects();
+    renderCourt();
+    renderLog();
+    updateUndo();
+    const phase = nextMode === 'serve' ? 'serving' : 'receiving';
+    setStatus(`Set ${setNumber} started: 0-0, Rotation 1, ${phase} first.`, 'info');
+  }
+
+  // Restore the score, set, lineup, bench, rotation and serve/receive phase from
+  // just before the most recent logged rally (or the start of the current set).
   function undoRally() {
     const prior = undoStack.pop();
     if (!prior) {
@@ -442,6 +518,9 @@
       updateUndo();
       return;
     }
+    const undidSetStart = prior.setNumber !== setNumber;
+    setNumber = prior.setNumber;
+    setStartMode = prior.setStartMode;
     scores.us = prior.scores.us;
     scores.opp = prior.scores.opp;
     lineup = prior.lineup;
@@ -458,17 +537,23 @@
     renderLog();
     updateUndo();
     const phase = prior.currentMode === 'serve' ? 'serving' : 'receiving';
+    if (undidSetStart) {
+      setStatus(`Back to the end of Set ${setNumber}: ${scores.us}-${scores.opp}.`, 'info');
+      return;
+    }
     setStatus(`Undid last rally: ${scores.us}-${scores.opp}, ${rotationLabel('Rotation')}, ${phase}.`, 'info');
   }
 
   function resetMatch() {
-    const confirmed = confirm('Reset the session? This clears the score, the rally log and all substitutions.');
+    const confirmed = confirm('Reset the session? This clears the score, the set number, the rally log and all substitutions.');
     if (!confirmed) {
       setStatus('Reset cancelled. Nothing was cleared.', 'muted');
       return;
     }
     scores.us = 0;
     scores.opp = 0;
+    setNumber = 1;
+    setStartMode = null;
     rallyHistory.length = 0;
     undoStack.length = 0;
     lineup = [...defaultLineup];
@@ -482,7 +567,7 @@
     renderCourt();
     renderLog();
     updateUndo();
-    setStatus('Session reset. Back in receive to start.', 'info');
+    setStatus('Session reset. Set 1, back in receive to start.', 'info');
   }
 
   function toggleLogList() {
@@ -498,6 +583,7 @@
     els.logWin.addEventListener('click', () => logRally(true));
     els.logLoss.addEventListener('click', () => logRally(false));
     els.undo.addEventListener('click', undoRally);
+    els.nextSet.addEventListener('click', startNextSet);
     els.reset.addEventListener('click', resetMatch);
     els.toggleLog.addEventListener('click', toggleLogList);
     els.onCourtSelect.addEventListener('change', (evt) => {

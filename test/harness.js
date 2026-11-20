@@ -138,7 +138,11 @@ function loadApp({ confirmAnswer = true } = {}) {
     subTarget: () => select.children[select.selectedIndex].textContent,
     options: () => select.children.map((o) => o.textContent),
     bench: () => benchSelect.children.map((o) => o.textContent),
-    log: () => els['rally-log'].children.map((li) => strip(li.html).replace(/\s+/g, ' '))
+    log: () => els['rally-log'].children.map((li) => strip(li.html).replace(/\s+/g, ' ')),
+    setLabel: () => els['set-label'].textContent,
+    setOver: () => !els['set-end'].classList.contains('is-hidden'),
+    setEndText: () => els['set-end-text'].textContent,
+    nextSetLabel: () => els['next-set'].textContent
   };
 }
 
