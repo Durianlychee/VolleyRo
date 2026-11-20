@@ -99,8 +99,7 @@ function loadApp({ confirmAnswer = true } = {}) {
     return {
       role: part(b.html, 'role'),
       name: part(b.html, 'name'),
-      // Position code only (for example "RB"), without the " · Rot N" suffix.
-      pos: part(b.html, 'pos-label').split(' ')[0],
+      pos: part(b.html, 'pos-label'),
       serving: b.html.includes('server-badge'),
       selected: b.className.split(' ').includes('selected'),
       front: b.className.split(' ').includes('front-row'),
@@ -130,7 +129,12 @@ function loadApp({ confirmAnswer = true } = {}) {
     },
     score: () => `${els['score-us'].textContent}-${els['score-opp'].textContent}`,
     mode: () => els['mode-label'].textContent || 'Receive',
-    rotation: () => Number((els['context-line'].textContent.match(/Rotation (\d)\./) || [])[1]),
+    rotation: () => Number((els['context-line'].textContent.match(/Rotation (\d)\b/) || [])[1]),
+    // Rotation label shown in the context line, for example "Rotation 2 · Setter in 6".
+    contextLabel: () => (els['context-line'].textContent.match(/(Rotation \d[^.,]*)\.$/) || [])[1],
+    // Rotation label above the court map, for example "Rot 2 · Setter in 6".
+    courtLabel: () => els['rot-label'].textContent,
+    status: () => els['sub-status'].textContent,
     subTarget: () => select.children[select.selectedIndex].textContent,
     options: () => select.children.map((o) => o.textContent),
     bench: () => benchSelect.children.map((o) => o.textContent),

@@ -71,6 +71,7 @@ function state(app) {
     score: app.score(),
     mode: app.mode(),
     rotation: app.rotation(),
+    rotationLabel: app.courtLabel(),
     court: app.court(),
     options: app.options(),
     subTarget: app.subTarget(),
@@ -315,4 +316,44 @@ test('BUG 8: confirmed reset restores the starting state and clears undo', () =>
   assert.equal(after.mode, 'Receive');
   assert.equal(after.rotation, 1);
   assert.equal(app.el('undo-rally').disabled, true);
+});
+
+// --- Rotation labels: play order and setter position ------------------------
+
+// Play order 1-6 with the setter (S1) moving 1, 6, 5, 4, 3, 2 (FIVB 7.6.2).
+const SETTER_BY_ROT = [1, 6, 5, 4, 3, 2];
+
+test('rotation labels show play order and the setter position in every rotation', () => {
+  const app = loadApp();
+  for (const mode of ['receive', 'serve']) {
+    eachRotation(app, mode, (k, m) => {
+      const setter = SETTER_BY_ROT[k];
+      assert.equal(m.where.Nasrul, setter, `model agrees: rot ${k + 1}`);
+      assert.equal(app.contextLabel(), `Rotation ${k + 1} · Setter in ${setter}`, `${mode} context rot ${k + 1}`);
+      assert.equal(app.courtLabel(), `Rot ${k + 1} · Setter in ${setter}`, `${mode} court rot ${k + 1}`);
+    });
+  }
+});
+
+test('rally log and undo status name the rotation and setter position', () => {
+  const app = loadApp();
+  app.click('log-win'); // side-out: Rot 2, setter rotates from 1 to 6
+  assert.match(app.log()[0], /Rot 2 · Setter in 6, Mode: serve\./);
+  app.click('log-loss');
+  app.click('log-win'); // Rot 3, setter in 5
+  assert.match(app.log()[0], /Rot 3 · Setter in 5, Mode: serve\./);
+  app.click('undo-rally');
+  assert.match(app.status(), /Rotation 2 · Setter in 6, receiving\./);
+});
+
+test('setter position is read from the lineup and drops out when no setter is on court', () => {
+  const app = loadApp();
+  app.click('rotate-lineup');
+  app.click('rotate-lineup'); // Rot 3, setter Nasrul in 5
+  assert.equal(app.contextLabel(), 'Rotation 3 · Setter in 5');
+  app.sub('Nasrul', 'Atiq'); // OPP replaces the only setter
+  assert.equal(app.contextLabel(), 'Rotation 3');
+  assert.equal(app.courtLabel(), 'Rot 3');
+  app.click('log-win');
+  assert.match(app.log()[0], /Rot 4, Mode: serve\./);
 });

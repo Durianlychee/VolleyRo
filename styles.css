@@ -312,10 +312,6 @@ p {
   .player .name {
     letter-spacing: -0.03em;
   }
-
-  .player .pos-rot {
-    display: none;
-  }
 }
 
 .stack {
@@ -504,6 +500,14 @@ button:disabled {
 
 .bench-name {
   font-weight: 700;
+}
+
+/* One rotation label for the whole court: play order plus where the setter stands. */
+.rot-label {
+  margin: 0 0 10px;
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--accent-ink);
 }
 
 .badge {
