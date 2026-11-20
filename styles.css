@@ -249,8 +249,11 @@ p {
   font-weight: 700;
 }
 
-.player .name {
+/* Role labels such as "Bench Outside 1" wrap onto a second line rather than being cut off. */
+.player > .name {
   font-weight: 700;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .player .pos-label {

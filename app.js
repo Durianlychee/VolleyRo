@@ -136,21 +136,23 @@
 
   // 5-1 in rotation 1, listed by position: setter serving in 1, outside hitter in 2,
   // middle in 3, opposite in 4, outside hitter in 5, middle in 6.
+  // Players are named by role (no real names) so each token teaches the role at a glance.
+  // Every label is unique, so dropdowns and status messages never mix two players up.
   const defaultLineup = [
-    { id: 'p1', role: 'S1', name: 'Nasrul' },
-    { id: 'p4', role: 'OH1', name: 'Luqman' },
-    { id: 'p3', role: 'M1', name: 'Bazli' },
-    { id: 'p2', role: 'OPP', name: 'Akip' },
-    { id: 'p5', role: 'OH2', name: 'Rahman' },
-    { id: 'p6', role: 'M2', name: 'Zahirah' }
+    { id: 'p1', role: 'S1', label: 'Setter' },
+    { id: 'p4', role: 'OH1', label: 'Outside 1' },
+    { id: 'p3', role: 'M1', label: 'Middle 1' },
+    { id: 'p2', role: 'OPP', label: 'Opposite' },
+    { id: 'p5', role: 'OH2', label: 'Outside 2' },
+    { id: 'p6', role: 'M2', label: 'Middle 2' }
   ];
 
   const defaultBench = [
-    { id: 'p7', role: 'OPP', name: 'Atiq' },
-    { id: 'p8', role: 'OH1', name: 'Sulaiman' },
-    { id: 'p9', role: 'M1', name: 'Aimi' },
-    { id: 'p10', role: 'M2', name: 'Aiman' },
-    { id: 'p11', role: 'OH2', name: 'Akip' }
+    { id: 'p7', role: 'OPP', label: 'Bench Opposite' },
+    { id: 'p8', role: 'OH1', label: 'Bench Outside 1' },
+    { id: 'p9', role: 'M1', label: 'Bench Middle 1' },
+    { id: 'p10', role: 'M2', label: 'Bench Middle 2' },
+    { id: 'p11', role: 'OH2', label: 'Bench Outside 2' }
   ];
 
   const scores = { us: 0, opp: 0 };
@@ -241,7 +243,7 @@
       btn.style.setProperty('--y', String(spot.y));
       const serverBadge = serverId === player.id ? '<span class="server-badge">Serving</span>' : '';
       btn.innerHTML = `<span class="role">${player.role}</span>
-        <span class="name">${player.name}</span>
+        <span class="name">${player.label}</span>
         ${serverBadge}
         <span class="pos-label">${pos.code}</span>`;
       btn.addEventListener('click', () => {
@@ -265,7 +267,7 @@
       const option = document.createElement('option');
       const pos = POSITIONS[index];
       option.value = player.id;
-      option.textContent = `${pos.num} (${pos.code}) - ${player.role} ${player.name}`;
+      option.textContent = `${pos.num} (${pos.code}) - ${player.role} ${player.label}`;
       els.onCourtSelect.appendChild(option);
     });
     const chosen = lineup.find((p) => p.id === previousChoice);
@@ -277,7 +279,7 @@
     bench.forEach((player) => {
       const option = document.createElement('option');
       option.value = player.id;
-      option.textContent = `${player.role} ${player.name}`;
+      option.textContent = `${player.role} ${player.label}`;
       els.benchSelect.appendChild(option);
     });
     if (bench.length > 0) {
@@ -292,11 +294,11 @@
       const card = document.createElement('div');
       card.className = 'bench-card';
       card.innerHTML = `<div class="pill">${player.role}</div>
-        <div class="bench-name">${player.name}</div>
+        <div class="bench-name">${player.label}</div>
         <button class="ghost tiny" data-id="${player.id}">Select</button>`;
       card.querySelector('button').addEventListener('click', () => {
         els.benchSelect.value = player.id;
-        setStatus(`${player.name} ready to sub`, 'info');
+        setStatus(`${player.label} ready to sub`, 'info');
       });
       els.benchList.appendChild(card);
     });
@@ -375,7 +377,7 @@
     lineup[courtIndex] = incoming;
     bench.push(outgoing);
     selectedOnCourt = incoming.id;
-    setStatus(`${incoming.name} (${incoming.role}) in for ${outgoing.name}.`, 'info');
+    setStatus(`${incoming.label} (${incoming.role}) in for ${outgoing.label}.`, 'info');
     renderSelects();
     renderBench();
     renderCourt();
