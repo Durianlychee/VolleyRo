@@ -22,6 +22,7 @@ Solo volleyball rotation, substitution, and rally tracker built as a lightweight
 ## Usage
 - Court: Tap a player card on the court to select them, then use the substitution controls to swap with a bench player.
 - Serve/receive layouts: The label above the court names each rotation by play order and by where the setter stands, for example "Rot 2 · Setter in 6" (the setter moves 1, 6, 5, 4, 3, 2 as you play Rot 1 to 6; with no setter on court only the play order shows). It updates when you rotate, and the rally log, phase hint and undo message use the same naming; serve/receive positions update to the matching diagrammed pattern.
+- Receive formations follow the conventional 5-1 pattern in every rotation: the two outside hitters and the back-row middle pass, while the setter and the opposite stay out of the passing line. Every receive formation is legal under the FIVB overlap rule (7.4.3).
 - Serve/receive toggle: Use the header toggle or the court controls to switch phases; manual rotate is available for side-outs.
 - Rally tracking: Press win/loss buttons to update scores; when you win in receive the lineup auto-rotates and you gain serve. On a phone these buttons sit in a bar pinned to the bottom of the screen.
 - Undo: "Undo last rally" restores the score, lineup, rotation and serve/receive phase from just before the most recent logged rally (a substitution made after that rally is undone too). Press it again to step further back.

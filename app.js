@@ -77,59 +77,61 @@
       ]
     ],
     receive: [
-      // Rotation 1 receive: front OPP-M1-OH1, back OH2-M2-S1 (setter deep)
+      // Conventional 5-1 receive: the two outside hitters and the back-row middle pass;
+      // the setter and the opposite stay out of the passing line.
+      // Rotation 1 receive: S1 tucked behind OH1 at the right sideline; passers OH2-M2-OH1
       [
-        { x: 88, y: 78 }, // 1 RB: S1
-        { x: 76, y: 48 }, // 2 RF: OH1
+        { x: 92, y: 54 }, // 1 RB: S1
+        { x: 76, y: 48 }, // 2 RF: OH1 (passes)
         { x: 50, y: 24 }, // 3 MF: M1
         { x: 22, y: 28 }, // 4 LF: OPP
-        { x: 26, y: 60 }, // 5 LB: OH2
-        { x: 52, y: 60 } // 6 MB: M2
+        { x: 26, y: 60 }, // 5 LB: OH2 (passes)
+        { x: 52, y: 60 } // 6 MB: M2 (passes)
       ],
-      // Rotation 2 receive: S1 up over OPP, passers M2-OH1-OH2
+      // Rotation 2 receive: S1 up behind OPP; passers OH2-M2-OH1 spread across the court
       [
-        { x: 82, y: 62 }, // 1 RB: OH1
+        { x: 78, y: 62 }, // 1 RB: OH1 (passes)
         { x: 76, y: 24 }, // 2 RF: M1
-        { x: 50, y: 30 }, // 3 MF: OPP
-        { x: 24, y: 46 }, // 4 LF: OH2
-        { x: 26, y: 62 }, // 5 LB: M2
-        { x: 66, y: 40 } // 6 MB: S1
+        { x: 40, y: 24 }, // 3 MF: OPP
+        { x: 18, y: 54 }, // 4 LF: OH2 (passes)
+        { x: 46, y: 62 }, // 5 LB: M2 (passes)
+        { x: 62, y: 40 } // 6 MB: S1
       ],
-      // Rotation 3 receive: S1 left, OH2 back-middle switch, M2 tight left
+      // Rotation 3 receive: S1 tucked behind M2 at the left net; passers OH2-OH1-M1
       [
-        { x: 88, y: 86 }, // 1 RB: M1
+        { x: 82, y: 64 }, // 1 RB: M1 (passes)
         { x: 78, y: 28 }, // 2 RF: OPP
-        { x: 52, y: 62 }, // 3 MF: OH2
-        { x: 18, y: 24 }, // 4 LF: M2
-        { x: 26, y: 70 }, // 5 LB: S1
-        { x: 72, y: 66 } // 6 MB: OH1
+        { x: 28, y: 60 }, // 3 MF: OH2 (passes)
+        { x: 10, y: 20 }, // 4 LF: M2
+        { x: 12, y: 38 }, // 5 LB: S1
+        { x: 55, y: 64 } // 6 MB: OH1 (passes)
       ],
-      // Rotation 4 receive: S1 far left, passers OH1-M1-OH2
+      // Rotation 4 receive: S1 far left at the net, OPP deep right; passers OH1-M1-OH2
       [
         { x: 86, y: 86 }, // 1 RB: OPP
-        { x: 68, y: 46 }, // 2 RF: OH2
+        { x: 68, y: 46 }, // 2 RF: OH2 (passes)
         { x: 50, y: 24 }, // 3 MF: M2
         { x: 8, y: 34 }, //  4 LF: S1
-        { x: 30, y: 72 }, // 5 LB: OH1
-        { x: 52, y: 62 } // 6 MB: M1
+        { x: 30, y: 72 }, // 5 LB: OH1 (passes)
+        { x: 52, y: 62 } // 6 MB: M1 (passes)
       ],
-      // Rotation 5 receive: front OH1-S1-M2, back M1-OPP-OH2 pass
+      // Rotation 5 receive: S1 at the net, OPP deep behind; passers OH1-M1-OH2
       [
-        { x: 82, y: 62 }, // 1 RB: OH2
+        { x: 80, y: 64 }, // 1 RB: OH2 (passes)
         { x: 76, y: 24 }, // 2 RF: M2
         { x: 50, y: 20 }, // 3 MF: S1
-        { x: 22, y: 24 }, // 4 LF: OH1
-        { x: 26, y: 62 }, // 5 LB: M1
-        { x: 52, y: 62 } // 6 MB: OPP
+        { x: 20, y: 58 }, // 4 LF: OH1 (passes)
+        { x: 45, y: 64 }, // 5 LB: M1 (passes)
+        { x: 60, y: 88 } // 6 MB: OPP
       ],
-      // Rotation 6 receive: S1 front-right, M1 drops to pass with OPP/OH2
+      // Rotation 6 receive: S1 front right, M1 at the left net, OPP deep left; passers OH1-OH2-M2
       [
-        { x: 84, y: 80 }, // 1 RB: M2
+        { x: 82, y: 64 }, // 1 RB: M2 (passes)
         { x: 76, y: 24 }, // 2 RF: S1
-        { x: 50, y: 22 }, // 3 MF: OH1
-        { x: 34, y: 52 }, // 4 LF: M1
-        { x: 22, y: 68 }, // 5 LB: OPP
-        { x: 52, y: 62 } // 6 MB: OH2
+        { x: 22, y: 58 }, // 3 MF: OH1 (passes)
+        { x: 8, y: 22 }, //  4 LF: M1
+        { x: 14, y: 86 }, // 5 LB: OPP
+        { x: 52, y: 64 } // 6 MB: OH2 (passes)
       ]
     ]
   };
