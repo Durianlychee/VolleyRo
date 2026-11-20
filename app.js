@@ -166,6 +166,7 @@
 
   const els = {
     court: document.getElementById('court'),
+    rotLabel: document.getElementById('rot-label'),
     modeLabel: document.getElementById('mode-label'),
     toggleMode: document.getElementById('toggle-mode'),
     swapPhase: document.getElementById('swap-phase'),
@@ -207,10 +208,25 @@
     return currentMode === 'serve' ? lineup[0].id : null;
   }
 
+  // Coaches name a 5-1 rotation by where the setter stands. Play order runs
+  // Rot 1-6 while the setter moves 1, 6, 5, 4, 3, 2, so the label shows both,
+  // read from the lineup itself. With no setter on court only the play order shows.
+  function setterPosition() {
+    const index = lineup.findIndex((player) => /^S\d*$/.test(player.role));
+    return index < 0 ? null : POSITIONS[index].num;
+  }
+
+  function rotationLabel(word = 'Rot') {
+    const setter = setterPosition();
+    const base = `${word} ${rotationIndex + 1}`;
+    return setter === null ? base : `${base} · Setter in ${setter}`;
+  }
+
   function renderCourt() {
     els.court.innerHTML = '';
     const layout = layouts[currentMode][rotationIndex];
     const serverId = getServerId();
+    els.rotLabel.textContent = rotationLabel();
     lineup.forEach((player, index) => {
       const spot = layout[index];
       const pos = POSITIONS[index];
@@ -227,7 +243,7 @@
       btn.innerHTML = `<span class="role">${player.role}</span>
         <span class="name">${player.name}</span>
         ${serverBadge}
-        <span class="pos-label">${pos.code}<span class="pos-rot"> · Rot ${rotationIndex + 1}</span></span>`;
+        <span class="pos-label">${pos.code}</span>`;
       btn.addEventListener('click', () => {
         selectedOnCourt = player.id;
         els.onCourtSelect.value = player.id;
@@ -320,7 +336,7 @@
     const modeCopy = currentMode === 'serve'
       ? 'Serving: follow the rotation lane, then move to perimeter defense.'
       : 'Receiving: honor overlaps, then flow to attack after first contact.';
-    els.contextLine.textContent = `${modeCopy} Rotation ${rotationIndex + 1}.`;
+    els.contextLine.textContent = `${modeCopy} ${rotationLabel('Rotation')}.`;
   }
 
   function setStatus(message, tone = 'muted') {
@@ -363,6 +379,7 @@
     renderSelects();
     renderBench();
     renderCourt();
+    updateContext();
   }
 
   function snapshot() {
@@ -402,7 +419,7 @@
       : before === 'serve'
         ? 'Lost serve -> back to receive.'
         : 'Stayed in receive.';
-    const copy = `${note} Rot ${rotationIndex + 1}, Mode: ${after}.`;
+    const copy = `${note} ${rotationLabel()}, Mode: ${after}.`;
     rallyHistory.unshift({
       won,
       copy,
@@ -441,7 +458,7 @@
     renderLog();
     updateUndo();
     const phase = prior.currentMode === 'serve' ? 'serving' : 'receiving';
-    setStatus(`Undid last rally: ${scores.us}-${scores.opp}, Rotation ${rotationIndex + 1}, ${phase}.`, 'info');
+    setStatus(`Undid last rally: ${scores.us}-${scores.opp}, ${rotationLabel('Rotation')}, ${phase}.`, 'info');
   }
 
   function resetMatch() {
