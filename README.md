@@ -34,6 +34,7 @@ Solo volleyball rotation, substitution, and rally tracker built as a lightweight
 - Undo: "Undo last rally" restores the score, set, lineup, rotation and serve/receive phase from just before the most recent logged rally (a substitution made after that rally is undone too). Undoing a mis-tapped winning point reopens the set; undoing just after starting a new set returns to the end of the previous one. Press it again to step further back.
 - Log toggle: Use "Show/Hide log" to expand or collapse the recent rally list; the summary line always shows the latest outcome.
 - Keep screen awake: The switch in the header (off by default) uses the Screen Wake Lock API so a phone does not dim and lock mid-lesson. It is hidden in browsers without that API, the lock is requested again when you return to the tab, and the choice lasts only for the browser session. "Reset session" does not change it.
+- Resume: reopening the page picks up your score, set, lineup, rotation, phase, log and undo history. "Start over" (or "Reset session") asks for confirmation, then clears the saved match too.
 - Reset: "Reset session" asks for confirmation, then clears scores, history and undo, and returns to Set 1 with the default lineup in receive (Rotation 1).
 
 ## Customization Ideas
@@ -45,7 +46,8 @@ Solo volleyball rotation, substitution, and rally tracker built as a lightweight
 - GitHub Actions runs the same command on every push and pull request.
 
 ## Notes
-- No persistence is built in; each browser session starts clean.
+- The match is saved in the browser (localStorage) after every change and resumed when you return, with a "Start over" choice in the welcome-back banner. A save from an incompatible version is discarded safely (`STATE_VERSION` in `app.js`).
+- A service worker (`sw.js`) caches the app so it opens without signal after the first visit, and a web app manifest lets you add it to a phone's home screen. Bump `CACHE_VERSION` in `sw.js` when the shell files change. There are no accounts and no server; it stays static on GitHub Pages.
 - Tested on modern evergreen browsers; no additional setup required.
 
 ## Licence

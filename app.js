@@ -171,6 +171,114 @@
   const DECIDING_SET = 5;
   const DECIDING_SET_TARGET = 15;
 
+  // --- Persistence -------------------------------------------------------
+  // The whole match is saved to localStorage after every change and restored on
+  // load. Players are stored by id and rebuilt from the roster above. Bump
+  // STATE_VERSION whenever the saved shape changes: an older or otherwise
+  // unrecognised save is discarded rather than guessed at.
+  const STORAGE_KEY = 'volleyro:state';
+  const STATE_VERSION = 1;
+  const roster = [...defaultLineup, ...defaultBench];
+  const rosterById = new Map(roster.map((player) => [player.id, player]));
+
+  // localStorage can be missing or throw (private mode, blocked storage), so the
+  // app always works without it.
+  function getStorage() {
+    try {
+      return typeof localStorage === 'undefined' ? null : localStorage;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  const isCount = (n, max) => Number.isInteger(n) && n >= 0 && n <= max;
+  const isMode = (m) => m === 'serve' || m === 'receive';
+  const isPlainText = (t) => typeof t === 'string' && t.length < 400 && !t.includes('<');
+
+  // Turn saved player ids back into roster players, or null if they are not
+  // exactly the roster split into six on court and five on the bench.
+  function unpackPlayers(lineupIds, benchIds) {
+    if (!Array.isArray(lineupIds) || !Array.isArray(benchIds)) return null;
+    if (lineupIds.length !== defaultLineup.length || benchIds.length !== defaultBench.length) return null;
+    const ids = [...lineupIds, ...benchIds];
+    if (new Set(ids).size !== roster.length || !ids.every((id) => rosterById.has(id))) return null;
+    return {
+      lineup: lineupIds.map((id) => rosterById.get(id)),
+      bench: benchIds.map((id) => rosterById.get(id))
+    };
+  }
+
+  function unpackHistory(items) {
+    if (!Array.isArray(items) || items.length > 20) return null;
+    const ok = items.every((item) => item && typeof item.won === 'boolean'
+      && isPlainText(item.copy) && isPlainText(item.score));
+    return ok ? items.map((item) => ({ won: item.won, copy: item.copy, score: item.score })) : null;
+  }
+
+  // One saved match state (the live one or an undo snapshot) -> app state, or null.
+  function unpackState(raw) {
+    if (!raw || typeof raw !== 'object' || !raw.scores) return null;
+    const players = unpackPlayers(raw.lineup, raw.bench);
+    const history = unpackHistory(raw.rallyHistory);
+    const valid = players && history
+      && isCount(raw.scores.us, 199) && isCount(raw.scores.opp, 199)
+      && Number.isInteger(raw.setNumber) && raw.setNumber >= 1 && raw.setNumber <= DECIDING_SET
+      && isCount(raw.rotationIndex, 5)
+      && isMode(raw.currentMode)
+      && (raw.setStartMode === null || isMode(raw.setStartMode));
+    if (!valid) return null;
+    return {
+      scores: { us: raw.scores.us, opp: raw.scores.opp },
+      lineup: players.lineup,
+      bench: players.bench,
+      rotationIndex: raw.rotationIndex,
+      currentMode: raw.currentMode,
+      selectedOnCourt: players.lineup.some((p) => p.id === raw.selectedOnCourt)
+        ? raw.selectedOnCourt
+        : players.lineup[0].id,
+      setNumber: raw.setNumber,
+      setStartMode: raw.setStartMode,
+      rallyHistory: history
+    };
+  }
+
+  function packState(state) {
+    return {
+      scores: { ...state.scores },
+      lineup: state.lineup.map((p) => p.id),
+      bench: state.bench.map((p) => p.id),
+      rotationIndex: state.rotationIndex,
+      currentMode: state.currentMode,
+      selectedOnCourt: state.selectedOnCourt,
+      setNumber: state.setNumber,
+      setStartMode: state.setStartMode,
+      rallyHistory: state.rallyHistory.map((item) => ({ ...item }))
+    };
+  }
+
+  // The saved match, or null when there is none or it cannot be trusted
+  // (not JSON, another version, damaged). A bad save is removed.
+  function loadSavedState() {
+    const storage = getStorage();
+    if (!storage) return null;
+    try {
+      const text = storage.getItem(STORAGE_KEY);
+      if (text === null) return null;
+      const saved = JSON.parse(text);
+      if (saved && saved.version === STATE_VERSION && saved.state && Array.isArray(saved.undoStack)) {
+        const state = unpackState(saved.state);
+        const undo = saved.undoStack.map(unpackState);
+        if (state && undo.every(Boolean) && typeof saved.logExpanded === 'boolean') {
+          return { state, undo, logExpanded: saved.logExpanded, withLibero: saved.withLibero === true };
+        }
+      }
+      storage.removeItem(STORAGE_KEY);
+    } catch (err) {
+      try { storage.removeItem(STORAGE_KEY); } catch (ignored) { /* nothing more to do */ }
+    }
+    return null;
+  }
+
   const scores = { us: 0, opp: 0 };
   // Only the current set number is tracked, so the fifth-set target applies.
   let setNumber = 1;
@@ -222,7 +330,11 @@
     nextSet: document.getElementById('next-set'),
     awakeWrap: document.getElementById('awake-wrap'),
     awakeToggle: document.getElementById('keep-awake'),
-    awakeStatus: document.getElementById('awake-status')
+    awakeStatus: document.getElementById('awake-status'),
+    resumeBanner: document.getElementById('resume-banner'),
+    resumeText: document.getElementById('resume-text'),
+    startOver: document.getElementById('start-over'),
+    keepGoing: document.getElementById('keep-going')
   };
 
   // Keep-screen-awake switch (Screen Wake Lock API). Off by default. The choice is
@@ -304,6 +416,57 @@
     }
   }
 
+
+  // Write the current match to localStorage; called after every change.
+  function saveState() {
+    const storage = getStorage();
+    if (!storage) return;
+    try {
+      storage.setItem(STORAGE_KEY, JSON.stringify({
+        version: STATE_VERSION,
+        state: packState(snapshot()),
+        undoStack: undoStack.map(packState),
+        logExpanded,
+        withLibero
+      }));
+    } catch (err) {
+      // Storage full or blocked: the app keeps working, it just will not resume.
+    }
+  }
+
+  function applySavedState(saved) {
+    const { state } = saved;
+    scores.us = state.scores.us;
+    scores.opp = state.scores.opp;
+    setNumber = state.setNumber;
+    setStartMode = state.setStartMode;
+    lineup = state.lineup;
+    bench = state.bench;
+    rotationIndex = state.rotationIndex;
+    currentMode = state.currentMode;
+    selectedOnCourt = state.selectedOnCourt;
+    rallyHistory.push(...state.rallyHistory);
+    undoStack.push(...saved.undo);
+    logExpanded = saved.logExpanded;
+    withLibero = saved.withLibero;
+  }
+
+  // True unless the saved match is still the untouched starting position.
+  function hasProgress(saved) {
+    const { state } = saved;
+    const untouched = saved.undo.length === 0 && state.scores.us === 0 && state.scores.opp === 0
+      && state.setNumber === 1 && state.rotationIndex === 0
+      && state.lineup.every((player, i) => player.id === defaultLineup[i].id);
+    return !untouched;
+  }
+
+  function showResumeBanner(visible) {
+    els.resumeBanner.classList.toggle('is-hidden', !visible);
+    if (visible) {
+      els.resumeText.textContent = `Welcome back: resumed Set ${setNumber}, ${scores.us}-${scores.opp}.`;
+    }
+  }
+
   // `announce` reports a libero change in the status line (a phase switch can bring the
   // libero in or out); callers that set their own status leave it off.
   function setMode(mode, announce = false) {
@@ -326,6 +489,7 @@
 
   function toggleMode() {
     setMode(currentMode === 'serve' ? 'receive' : 'serve', true);
+    saveState();
   }
 
   // The player in position 1 serves (FIVB 12.2.2.2), whatever their role.
@@ -440,6 +604,7 @@
         selectedOnCourt = slotPlayer.id;
         els.onCourtSelect.value = slotPlayer.id;
         renderCourt();
+        saveState();
       });
       els.court.appendChild(btn);
     });
@@ -605,6 +770,7 @@
     renderBench();
     renderCourt();
     updateContext();
+    saveState();
   }
 
   function snapshot() {
@@ -662,6 +828,7 @@
     renderLog();
     updateContext();
     updateUndo();
+    saveState();
   }
 
   // Start the next set (or, after the fifth, a new match at set 1): the score and
@@ -692,6 +859,7 @@
     const phase = nextMode === 'serve' ? 'serving' : 'receiving';
     const toss = tossDecides ? ' A coin toss decides who serves first: use the serve/receive toggle to change it.' : '';
     setStatus(`Set ${setNumber} started: 0-0, Rotation 1, ${phase} first.${toss}`, 'info');
+    saveState();
   }
 
   // Restore the score, set, lineup, bench, rotation and serve/receive phase from
@@ -722,6 +890,7 @@
     renderLog();
     updateUndo();
     const phase = prior.currentMode === 'serve' ? 'serving' : 'receiving';
+    saveState();
     if (undidSetStart) {
       setStatus(`Back to the end of Set ${setNumber}: ${scores.us}-${scores.opp}.`, 'info');
       return;
@@ -752,6 +921,8 @@
     renderCourt();
     renderLog();
     updateUndo();
+    showResumeBanner(false);
+    saveState();
     setStatus('Session reset. Set 1, back in receive to start.', 'info');
   }
 
@@ -765,17 +936,22 @@
         : 'Libero off: the bare 5-1, with both middles playing every rotation.',
       'info'
     );
+    saveState();
   }
 
   function toggleLogList() {
     logExpanded = !logExpanded;
     applyLogVisibility();
+    saveState();
   }
 
   function initEvents() {
     els.toggleMode.addEventListener('click', toggleMode);
     els.swapPhase.addEventListener('click', toggleMode);
-    els.rotate.addEventListener('click', () => rotateLineup());
+    els.rotate.addEventListener('click', () => {
+      rotateLineup();
+      saveState();
+    });
     els.liberoToggle.addEventListener('change', toggleLibero);
     els.makeSub.addEventListener('click', makeSubstitution);
     els.logWin.addEventListener('click', () => logRally(true));
@@ -787,7 +963,10 @@
     els.onCourtSelect.addEventListener('change', (evt) => {
       selectedOnCourt = evt.target.value;
       renderCourt();
+      saveState();
     });
+    els.startOver.addEventListener('click', resetMatch);
+    els.keepGoing.addEventListener('click', () => showResumeBanner(false));
   }
 
   function renderAll() {
@@ -802,7 +981,22 @@
     setStatus('Tap a player on court to target them for a sub.', 'info');
   }
 
+  // Cache the app shell so it opens offline after the first visit.
+  function registerServiceWorker() {
+    if (typeof navigator === 'undefined' || !navigator.serviceWorker) return;
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {});
+    });
+  }
+
+  const saved = loadSavedState();
+  if (saved) applySavedState(saved);
   initEvents();
   initWakeLock();
   renderAll();
+  if (saved && hasProgress(saved)) {
+    showResumeBanner(true);
+    setStatus('Resumed where you left off. Tap a player on court to target them for a sub.', 'info');
+  }
+  registerServiceWorker();
 })();
