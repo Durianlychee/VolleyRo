@@ -955,6 +955,7 @@ test('LIBERO: switching phase or losing serve says when the libero comes in or o
   assert.equal(app.status(), 'Rotation advanced clockwise after a side-out. Libero in for M1 at position 6.');
   setMode(app, 'receive'); // same middle covered in both phases: nothing to announce
   assert.equal(app.status(), 'Rotation advanced clockwise after a side-out. Libero in for M1 at position 6.');
+});
 
 // Keep-screen-awake switch (Screen Wake Lock API).
 const tick = () => new Promise((resolve) => setImmediate(resolve));
