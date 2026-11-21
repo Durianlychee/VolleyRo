@@ -31,7 +31,7 @@ function model() {
 }
 
 // Every reviewed (legal) formation, by rotational position 1-6 as [x, y].
-// These must not change: the fix only re-keys the data by position.
+// Receive follows the conventional 5-1: outside hitters and the back-row middle pass.
 const FORMATIONS = {
   serve: [
     [[84, 92], [76, 24], [50, 20], [22, 24], [26, 60], [52, 60]],
@@ -42,12 +42,12 @@ const FORMATIONS = {
     [[84, 92], [76, 24], [50, 20], [22, 24], [26, 70], [52, 70]]
   ],
   receive: [
-    [[88, 78], [76, 48], [50, 24], [22, 28], [26, 60], [52, 60]],
-    [[82, 62], [76, 24], [50, 30], [24, 46], [26, 62], [66, 40]],
-    [[88, 86], [78, 28], [52, 62], [18, 24], [26, 70], [72, 66]],
+    [[92, 54], [76, 48], [50, 24], [22, 28], [26, 60], [52, 60]],
+    [[78, 62], [76, 24], [40, 24], [18, 54], [46, 62], [62, 40]],
+    [[82, 64], [78, 28], [28, 60], [10, 20], [12, 38], [55, 64]],
     [[86, 86], [68, 46], [50, 24], [8, 34], [30, 72], [52, 62]],
-    [[82, 62], [76, 24], [50, 20], [22, 24], [26, 62], [52, 62]],
-    [[84, 80], [76, 24], [50, 22], [34, 52], [22, 68], [52, 62]]
+    [[80, 64], [76, 24], [50, 20], [20, 58], [45, 64], [60, 88]],
+    [[82, 64], [76, 24], [22, 58], [8, 22], [14, 86], [52, 64]]
   ]
 };
 
@@ -158,6 +158,39 @@ test('receive formations are legal: no overlap fault (FIVB 7.4.3, level is legal
     // Left to right inside each row: 4-3-2 and 5-6-1.
     for (const [left, right] of [[4, 3], [3, 2], [5, 6], [6, 1]]) {
       assert.ok(spot[left].x <= spot[right].x, `${msg}: position ${left} right of ${right}`);
+    }
+  });
+});
+
+test('receive is a conventional 5-1: both outside hitters and the back-row middle pass, setter and opposite do not', () => {
+  const app = loadApp();
+  const CARD = 15; // a card is 15% of court width wide
+  eachRotation(app, 'receive', (k, m) => {
+    const cards = app.court();
+    const msg = `receive rot ${k + 1}`;
+    const backRowMiddle = cards.filter((c) => c.role.startsWith('M') && !FRONT.has(CODES[m.where[c.name] - 1]));
+    assert.equal(backRowMiddle.length, 1, `${msg}: one back-row middle`);
+    const passers = cards.filter((c) => c.role.startsWith('OH')).concat(backRowMiddle);
+    assert.equal(passers.length, 3, `${msg}: three passers`);
+    // Passers stand in the back half, past the attack line, ready to take serve.
+    for (const p of passers) assert.ok(p.y >= 45, `${msg}: passer ${p.role} at y${p.y} is too close to the net`);
+    const ys = passers.map((p) => p.y);
+    const xs = passers.map((p) => p.x);
+    const [front, back, left, right] = [Math.min(...ys), Math.max(...ys), Math.min(...xs), Math.max(...xs)];
+    // Each passer has their own lane, and together they cover the left and right of the court.
+    const lanes = [...xs].sort((a, b) => a - b);
+    for (let i = 1; i < lanes.length; i += 1) {
+      assert.ok(lanes[i] - lanes[i - 1] >= CARD, `${msg}: passers bunched in one lane at x${lanes[i - 1]} and x${lanes[i]}`);
+    }
+    assert.ok(left <= 30 && right >= 65, `${msg}: passers span only x${left}-${right}`);
+    // The setter stays in front of the deepest passer, for a short run to the target.
+    const setter = cards.find((c) => c.role === 'S1');
+    assert.ok(setter.y < back, `${msg}: setter at y${setter.y} is behind the passers`);
+    // The setter and opposite are in front of, behind, or a card width outside the passing line.
+    for (const role of ['S1', 'OPP']) {
+      const c = cards.find((card) => card.role === role);
+      const clear = c.y < front || c.y > back || c.x <= left - CARD || c.x >= right + CARD;
+      assert.ok(clear, `${msg}: ${role} at (${c.x},${c.y}) stands in the passing line`);
     }
   });
 });
