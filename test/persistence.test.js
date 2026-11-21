@@ -200,11 +200,31 @@ test('the manifest is relative and its icons exist', () => {
   assert.ok(fs.existsSync(path.join(ROOT, manifest.start_url)));
 });
 
-test('index.html links the manifest and uses only relative asset URLs', () => {
+const PAGES_BASE = 'https://user.github.io/VolleyRo/';
+
+test('index.html links the manifest and uses only URLs that stay inside a Pages subpath', () => {
   const html = read('index.html');
-  assert.match(html, /<link rel="manifest" href="manifest\.webmanifest">/);
-  for (const [, url] of html.matchAll(/(?:href|src)="([^"]+)"/g)) assert.ok(!/^(\/|https?:)/.test(url), url);
-  assert.match(read('app.js'), /register\('sw\.js', \{ scope: '\.\/' \}\)/);
+  const manifestTag = [...html.matchAll(/<link\b[^>]*>/g)].map((m) => m[0]).find((t) => /rel="manifest"/.test(t));
+  assert.ok(manifestTag, 'manifest link present');
+  for (const [, url] of html.matchAll(/(?:href|src)="([^"]+)"/g)) {
+    const resolved = new URL(url, PAGES_BASE);
+    assert.equal(resolved.origin, new URL(PAGES_BASE).origin, url);
+    assert.ok(resolved.pathname.startsWith('/VolleyRo/'), url);
+  }
+});
+
+test('the app registers the service worker with a subpath-safe URL and scope after load', () => {
+  const calls = [];
+  const navigator = { serviceWorker: { register: (url, opts) => { calls.push([url, opts]); return Promise.resolve(); } } };
+  const app = loadApp({ navigator });
+  assert.equal(calls.length, 0);
+  app.fireWindow('load');
+  assert.equal(calls.length, 1);
+  const [url, opts] = calls[0];
+  for (const u of [url, opts.scope]) {
+    assert.ok(new URL(u, PAGES_BASE + 'index.html').pathname.startsWith('/VolleyRo/'), u);
+  }
+  assert.ok(fs.existsSync(path.join(ROOT, url)));
 });
 
 // Run sw.js against a fake service-worker scope.

@@ -91,7 +91,8 @@ function fakeStorage(initial = {}) {
   };
 }
 
-function loadApp({ confirmAnswer = true, wakeLock, session, storage } = {}) {
+function loadApp({ confirmAnswer = true, wakeLock, session, storage, navigator } = {}) {
+  const windowListeners = {};
   const els = {};
   const confirms = [];
   const docListeners = {};
@@ -113,7 +114,13 @@ function loadApp({ confirmAnswer = true, wakeLock, session, storage } = {}) {
     return typeof confirmAnswer === 'function' ? confirmAnswer(message) : confirmAnswer;
   };
   const src = fs.readFileSync(APP_PATH, 'utf8');
-  const sandbox = { document, console, confirm, window: { confirm }, navigator: wakeLock ? { wakeLock } : {} };
+  const sandbox = {
+    document,
+    console,
+    confirm,
+    window: { confirm, addEventListener: (t, fn) => { windowListeners[t] = fn; } },
+    navigator: navigator || (wakeLock ? { wakeLock } : {})
+  };
   if (session) sandbox.sessionStorage = session;
   if (storage) sandbox.localStorage = storage;
   vm.runInNewContext(src, sandbox, { filename: APP_PATH });
@@ -145,6 +152,7 @@ function loadApp({ confirmAnswer = true, wakeLock, session, storage } = {}) {
       (docListeners.visibilitychange || []).forEach((fn) => fn({}));
     },
     confirms,
+    fireWindow: (type) => windowListeners[type]?.(),
     court,
     el: (id) => document.getElementById(id),
     click: (id) => document.getElementById(id).click(),
