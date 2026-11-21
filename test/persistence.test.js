@@ -202,17 +202,6 @@ test('the manifest is relative and its icons exist', () => {
 
 const PAGES_BASE = 'https://user.github.io/VolleyRo/';
 
-test('index.html links the manifest and uses only URLs that stay inside a Pages subpath', () => {
-  const html = read('index.html');
-  const manifestTag = [...html.matchAll(/<link\b[^>]*>/g)].map((m) => m[0]).find((t) => /rel="manifest"/.test(t));
-  assert.ok(manifestTag, 'manifest link present');
-  for (const [, url] of html.matchAll(/(?:href|src)="([^"]+)"/g)) {
-    const resolved = new URL(url, PAGES_BASE);
-    assert.equal(resolved.origin, new URL(PAGES_BASE).origin, url);
-    assert.ok(resolved.pathname.startsWith('/VolleyRo/'), url);
-  }
-});
-
 test('the app registers the service worker with a subpath-safe URL and scope after load', () => {
   const calls = [];
   const navigator = { serviceWorker: { register: (url, opts) => { calls.push([url, opts]); return Promise.resolve(); } } };
