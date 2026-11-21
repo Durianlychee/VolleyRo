@@ -101,6 +101,8 @@ function loadApp({ confirmAnswer = true } = {}) {
       name: part(b.html, 'name'),
       pos: part(b.html, 'pos-label'),
       serving: b.html.includes('server-badge'),
+      libero: b.className.split(' ').includes('libero'),
+      swap: part(b.html, 'swap-badge'),
       selected: b.className.split(' ').includes('selected'),
       front: b.className.split(' ').includes('front-row'),
       x: Number(b.style.getPropertyValue('--x') || parseFloat(b.style.left)),
@@ -136,6 +138,14 @@ function loadApp({ confirmAnswer = true } = {}) {
     // Rotation label above the court map, for example "Rot 2 · Setter in 6".
     courtLabel: () => els['rot-label'].textContent,
     status: () => els['sub-status'].textContent,
+    // The "With libero" switch and the note under the court label.
+    setLibero: (on) => {
+      const toggle = document.getElementById('libero-toggle');
+      toggle.checked = on;
+      toggle.fire('change');
+    },
+    liberoOn: () => Boolean(document.getElementById('libero-toggle').checked),
+    liberoNote: () => (els['libero-note'].classList.contains('is-hidden') ? '' : els['libero-note'].textContent),
     subTarget: () => select.children[select.selectedIndex].textContent,
     options: () => select.children.map((o) => o.textContent),
     bench: () => benchSelect.children.map((o) => o.textContent),

@@ -529,7 +529,7 @@ test('SET: undo of a mis-tapped winning point reopens the set', () => {
 
 test('SET: starting the next set resets the score and returns to Rotation 1, keeping subs', () => {
   const app = loadApp();
-  app.sub('Luqman', 'Sulaiman');
+  app.sub('Outside 1', 'Outside 3');
   for (let i = 0; i < 3; i += 1) { // three side-outs: Rotation 4
     app.click('log-win');
     app.click('log-loss');
@@ -546,9 +546,9 @@ test('SET: starting the next set resets the score and returns to Rotation 1, kee
   assert.equal(app.rotation(), 1);
   assert.deepEqual(app.log(), []);
   const court = app.court();
-  assert.equal(court.find((c) => c.pos === 'RB').name, 'Nasrul', 'Rotation 1 server back in position 1');
-  assert.equal(court.find((c) => c.pos === 'RF').name, 'Sulaiman', 'the substitute keeps the replaced slot');
-  assert.ok(!court.some((c) => c.name === 'Luqman'));
+  assert.equal(court.find((c) => c.pos === 'RB').name, 'Setter', 'Rotation 1 server back in position 1');
+  assert.equal(court.find((c) => c.pos === 'RF').name, 'Outside 3', 'the substitute keeps the replaced slot');
+  assert.ok(!court.some((c) => c.name === 'Outside 1'));
 });
 
 test('SET: first serve alternates between sets (FIVB 12.1)', () => {
@@ -556,7 +556,7 @@ test('SET: first serve alternates between sets (FIVB 12.1)', () => {
   assert.equal(app.mode(), 'Receive');
   winSet(app);
   assert.equal(app.mode(), 'Serve', 'received first in set 1, so serve first in set 2');
-  assert.equal(app.court().find((c) => c.serving).name, 'Nasrul');
+  assert.equal(app.court().find((c) => c.serving).name, 'Setter');
   winSet(app);
   assert.equal(app.mode(), 'Receive', 'served first in set 2, so receive first in set 3');
   winSet(app);
@@ -651,4 +651,308 @@ test('court and phase pill carry the current phase so CSS can colour it', () => 
   assert.equal(app.el('mode-label').dataset.state, 'serve');
   app.click('swap-phase');
   assert.equal(app.els.court.dataset.phase, 'receive');
+});
+
+// --- Optional libero ("With libero" switch, off by default) ------------------
+
+// Oracle for the back-row middle in each rotation of the default 5-1, worked out by hand:
+// M1 starts in 3 and M2 in 6, and each rotation moves a player 2 -> 1 -> 6 -> 5 -> 4 -> 3 -> 2.
+// [middle role, position] of the middle that is in the back row in Rot 1 to Rot 6.
+const BACK_ROW_MIDDLE = [['M2', 6], ['M2', 5], ['M1', 1], ['M1', 6], ['M1', 5], ['M2', 1]];
+const FRONT_MIDDLE = ['M1', 'M1', 'M2', 'M2', 'M2', 'M1'];
+const SERVER_ROLES = ['S1', 'OH1', 'M1', 'OPP', 'OH2', 'M2'];
+
+function liberoApp() {
+  const app = loadApp();
+  app.setLibero(true);
+  return app;
+}
+
+// Overlap legality (FIVB 7.4.3) for the six cards, listed by position. The server
+// (position 1 in the serve phase) stands behind the end line, so is skipped there.
+function assertLegalOverlap(cards, mode, msg) {
+  const spot = {};
+  cards.forEach((c, i) => { spot[i + 1] = c; });
+  const skipServer = (pair) => !(mode === 'serve' && pair.includes(1));
+  for (const [front, back] of [[2, 1], [3, 6], [4, 5]].filter(skipServer)) {
+    assert.ok(spot[front].y <= spot[back].y, `${msg}: position ${front} behind ${back}`);
+  }
+  for (const [left, right] of [[4, 3], [3, 2], [5, 6], [6, 1]].filter(skipServer)) {
+    assert.ok(spot[left].x <= spot[right].x, `${msg}: position ${left} right of ${right}`);
+  }
+}
+
+test('LIBERO: the switch is off by default, so a first lesson is the bare 5-1', () => {
+  const app = loadApp();
+  assert.equal(app.liberoOn(), false);
+  assert.equal(app.liberoNote(), '');
+  for (const mode of ['receive', 'serve']) {
+    eachRotation(app, mode, (k) => {
+      assert.ok(!app.court().some((c) => c.libero || c.role === 'L'), `${mode} rot ${k + 1}: no libero on court`);
+      assert.ok(app.court().some((c) => c.role === 'M1') && app.court().some((c) => c.role === 'M2'), `${mode} rot ${k + 1}: both middles play`);
+    });
+  }
+});
+
+test('LIBERO: in every rotation and phase the libero takes the back-row middle\'s spot, except when that middle serves', () => {
+  const app = liberoApp();
+  for (const mode of ['receive', 'serve']) {
+    eachRotation(app, mode, (k, m) => {
+      const msg = `${mode} rot ${k + 1}`;
+      const cards = app.court();
+      const [middle, pos] = BACK_ROW_MIDDLE[k];
+      const serveCase = mode === 'serve' && pos === 1;
+      const liberos = cards.filter((c) => c.libero);
+      // The six spots and who the model says stands in them.
+      cards.forEach((c, i) => {
+        assert.deepEqual([c.x, c.y], FORMATIONS[mode][k][i], `${msg}: position ${i + 1} coordinates`);
+        assert.equal(c.pos, CODES[i], `${msg}: position label`);
+      });
+      if (serveCase) {
+        // The libero never serves: the middle stays in position 1 to serve, the libero is off.
+        assert.equal(liberos.length, 0, `${msg}: libero is off while ${middle} serves`);
+        assert.equal(cards[0].role, middle, `${msg}: ${middle} serves`);
+        assert.equal(cards[0].serving, true, `${msg}: ${middle} carries the serving badge`);
+      } else {
+        assert.equal(liberos.length, 1, `${msg}: exactly one libero`);
+        const lib = cards[pos - 1];
+        assert.equal(lib.libero, true, `${msg}: libero stands in position ${pos}`);
+        assert.equal(lib.role, 'L');
+        assert.equal(lib.name, 'Libero');
+        assert.equal(lib.swap, `for ${middle}`, `${msg}: swap is marked on the libero`);
+        assert.equal(lib.front, false, `${msg}: the libero never plays the front row`);
+        assert.ok(!cards.some((c) => c.role === middle), `${msg}: ${middle} is off court while the libero is in`);
+      }
+      // The other middle is always in the front row, and everyone else is who the model says.
+      const front = cards.find((c) => c.role === FRONT_MIDDLE[k]);
+      assert.ok(front && front.front, `${msg}: ${FRONT_MIDDLE[k]} blocks at the net`);
+      for (const c of cards.filter((card) => !card.libero && !card.role.startsWith('M'))) {
+        assert.equal(m.where[c.name], CODES.indexOf(c.pos) + 1, `${msg}: ${c.name} in the modelled position`);
+      }
+      assert.equal(cards.filter((c) => c.serving && c.libero).length, 0, `${msg}: the libero never serves`);
+    });
+  }
+});
+
+test('LIBERO: FIVB overlap is legal in every rotation, both phases, with the libero on', () => {
+  const app = liberoApp();
+  for (const mode of ['receive', 'serve']) {
+    eachRotation(app, mode, (k) => assertLegalOverlap(app.court(), mode, `${mode} rot ${k + 1}`));
+  }
+});
+
+test('LIBERO: in receive the libero passes in the back-row middle\'s place, with both outside hitters', () => {
+  const app = liberoApp();
+  eachRotation(app, 'receive', (k) => {
+    const cards = app.court();
+    const passers = cards.filter((c) => c.role === 'OH1' || c.role === 'OH2' || c.libero);
+    assert.equal(passers.length, 3, `rot ${k + 1}: libero and the two outside hitters pass`);
+    for (const p of passers) assert.ok(p.y >= 45, `rot ${k + 1}: ${p.role} at y${p.y} is too close to the net`);
+    for (const role of ['S1', 'OPP']) {
+      const c = cards.find((card) => card.role === role);
+      assert.ok(!passers.includes(c), `rot ${k + 1}: ${role} does not pass`);
+    }
+  });
+});
+
+test('LIBERO: serving order is unchanged: OH1, M1, OPP, OH2, M2, S1, and the middle serves, never the libero', () => {
+  const app = liberoApp();
+  const servers = [];
+  for (let i = 0; i < 6; i += 1) {
+    app.click('log-win'); // side-out: rotate and serve
+    const cards = app.court();
+    const server = cards.find((c) => c.serving);
+    servers.push(server.role);
+    assert.equal(server.libero, false, `serve ${i + 1}: the libero never serves`);
+    assert.equal(server.pos, 'RB');
+    const middleServes = server.role.startsWith('M');
+    assert.equal(cards.filter((c) => c.libero).length, middleServes ? 0 : 1, `serve ${i + 1}: libero is off exactly when a middle serves`);
+    app.click('log-loss'); // lose serve: back to receive
+    assert.equal(app.court().filter((c) => c.libero).length, 1, `after serve ${i + 1}: libero back in for the back-row middle`);
+    assert.equal(app.court()[0].libero, middleServes, `after serve ${i + 1}: libero comes in for the middle who served`);
+  }
+  assert.deepEqual(servers, ['OH1', 'M1', 'OPP', 'OH2', 'M2', 'S1']);
+  assert.deepEqual(servers, [...SERVER_ROLES.slice(1), SERVER_ROLES[0]]);
+});
+
+test('LIBERO: rotation, rotation labels and the setter are the same with the switch on or off', () => {
+  const off = loadApp();
+  const on = liberoApp();
+  for (const mode of ['receive', 'serve']) {
+    setMode(off, mode);
+    setMode(on, mode);
+    for (let k = 0; k < 6; k += 1) {
+      assert.equal(on.courtLabel(), off.courtLabel(), `${mode} rot ${k + 1}`);
+      assert.equal(on.contextLabel(), off.contextLabel(), `${mode} rot ${k + 1}`);
+      const swap = (cards) => cards.map((c) => (c.libero ? { ...c, role: BACK_ROW_MIDDLE[k][0] } : c).role);
+      assert.deepEqual(swap(on.court()), off.court().map((c) => c.role), `${mode} rot ${k + 1}: same six roles bar the libero swap`);
+      on.click('rotate-lineup');
+      off.click('rotate-lineup');
+    }
+  }
+});
+
+test('LIBERO: the swap is called out in each rotation (middle out going to the front, libero in going to the back)', () => {
+  const app = liberoApp();
+  // Receive phase, Rot 1 to Rot 6 and round again.
+  const receiveChanges = [
+    '', // Rot 1 -> 2: M2 stays in the back row, libero stays in for M2
+    'M2 rotates to the front row (position 4): libero out, M2 back in. Libero in for M1 at position 1.',
+    '', // Rot 3 -> 4: M1 moves 1 -> 6, libero stays in for M1
+    '', // Rot 4 -> 5
+    'M1 rotates to the front row (position 4): libero out, M1 back in. Libero in for M2 at position 1.',
+    '' // Rot 6 -> 1
+  ];
+  for (let k = 0; k < 6; k += 1) {
+    app.click('rotate-lineup');
+    const base = 'Rotation advanced clockwise after a side-out.';
+    assert.equal(app.status(), receiveChanges[k] ? `${base} ${receiveChanges[k]}` : base, `receive Rot ${k + 1} -> ${(k + 1) % 6 + 1}`);
+  }
+  // Serve phase: the middle at position 1 serves, so the libero comes out for it and goes back in a rotation later.
+  setMode(app, 'serve');
+  const serveChanges = [
+    '', // Rot 1 -> 2
+    'M2 rotates to the front row (position 4): libero out, M2 back in.', // M1 reaches position 1 and serves
+    'Libero in for M1 at position 6.', // M1 has served, moves to 6
+    '', // Rot 4 -> 5
+    'M1 rotates to the front row (position 4): libero out, M1 back in.', // M2 reaches position 1 and serves
+    'Libero in for M2 at position 6.'
+  ];
+  for (let k = 0; k < 6; k += 1) {
+    app.click('rotate-lineup');
+    const base = 'Rotation advanced clockwise after a side-out.';
+    assert.equal(app.status(), serveChanges[k] ? `${base} ${serveChanges[k]}` : base, `serve Rot ${k + 1} -> ${(k + 1) % 6 + 1}`);
+  }
+});
+
+test('LIBERO: a side-out win rotates into serve using the serve-phase swap', () => {
+  const app = liberoApp();
+  app.click('log-win'); // Rot 2 serving: M2 still back row at 5, libero in for M2
+  assert.equal(app.mode(), 'Serve');
+  assert.equal(app.court()[4].libero, true);
+  app.click('log-loss');
+  app.click('log-win'); // Rot 3 serving: M1 reaches position 1 and serves, so no libero
+  assert.equal(app.rotation(), 3);
+  assert.equal(app.court().some((c) => c.libero), false);
+  assert.equal(app.court()[0].role, 'M1');
+  assert.equal(app.court()[0].serving, true);
+  assert.match(app.status(), /M2 rotates to the front row \(position 4\): libero out, M2 back in\./);
+  assert.doesNotMatch(app.status(), /Libero in for M1/);
+});
+
+test('LIBERO: the note under the court label says what the libero is doing', () => {
+  const app = liberoApp();
+  const notes = {};
+  for (const mode of ['receive', 'serve']) {
+    eachRotation(app, mode, (k) => { notes[`${mode}${k + 1}`] = app.liberoNote(); });
+  }
+  assert.equal(notes.receive1, 'Libero in for M2 at position 6 (MB). M1 in the front row.');
+  assert.equal(notes.serve1, 'Libero in for M2 at position 6 (MB). M1 in the front row.');
+  assert.equal(notes.receive3, 'Libero in for M1 at position 1 (RB). M2 in the front row.');
+  assert.equal(notes.serve3, 'M1 serves from position 1 and stays in: the libero never serves, so the libero is off until the serve is over. M2 in the front row.');
+  assert.equal(notes.serve6, 'M2 serves from position 1 and stays in: the libero never serves, so the libero is off until the serve is over. M1 in the front row.');
+  assert.equal(notes.receive6, 'Libero in for M2 at position 1 (RB). M1 in the front row.');
+  app.setLibero(false);
+  assert.equal(app.liberoNote(), '', 'note is hidden when the switch is off');
+});
+
+test('LIBERO: the sub dropdown flags the slot the libero covers', () => {
+  const app = liberoApp();
+  const flagged = app.options().filter((o) => o.endsWith('(libero in)'));
+  assert.deepEqual(flagged, ['6 (MB) - M2 Middle 2 (libero in)']);
+  app.setLibero(false);
+  assert.ok(!app.options().some((o) => o.includes('libero')));
+  setMode(app, 'serve');
+  app.setLibero(true);
+  for (let k = 0; k < 2; k += 1) app.click('rotate-lineup'); // Rot 3, serve: M1 serves in position 1
+  assert.ok(!app.options().some((o) => o.includes('libero')), 'no libero while a middle serves');
+});
+
+test('LIBERO: tapping the libero targets the middle they replaced; subbing keeps the libero in', () => {
+  const app = liberoApp();
+  app.tapPlayer('Libero');
+  assert.equal(app.subTarget(), '6 (MB) - M2 Middle 2 (libero in)');
+  assert.equal(app.court()[5].selected, true);
+  app.sub('Libero', 'Middle 4'); // a fresh middle for the covered slot
+  const court = app.court();
+  assert.equal(court[5].libero, true, 'libero still covers the back-row middle');
+  assert.equal(court[5].swap, 'for M2');
+  assert.ok(app.bench().includes('M2 Middle 2'), 'the replaced middle went to the bench');
+  assert.match(app.status(), /Middle 4 \(M2\) in for Middle 2\./);
+});
+
+test('LIBERO: with no middle in the back row the libero is off', () => {
+  const app = liberoApp();
+  app.sub('Libero', 'Opposite 2'); // an opposite takes the back-row middle's slot
+  assert.equal(app.court().some((c) => c.libero), false);
+  assert.equal(app.court()[5].role, 'OPP');
+  assert.equal(app.liberoNote(), 'No middle in the back row, so the libero is off. M1 in the front row.');
+  // Rot 2: the remaining middle is at the net in position 2, and the libero still does not replace a front-row player.
+  app.click('rotate-lineup');
+  assert.equal(app.court()[1].role, 'M1');
+  assert.equal(app.court().some((c) => c.libero), false);
+});
+
+test('LIBERO: switching on or off mid-match changes only the swap, not score, rotation or phase', () => {
+  const app = loadApp();
+  for (let i = 0; i < 2; i += 1) { app.click('log-win'); app.click('log-loss'); }
+  app.click('log-win'); // Rot 4, serving
+  const bare = state(app);
+  app.setLibero(true);
+  const withLib = state(app);
+  assert.equal(withLib.score, bare.score);
+  assert.equal(withLib.mode, bare.mode);
+  assert.equal(withLib.rotation, bare.rotation);
+  assert.equal(withLib.rotationLabel, bare.rotationLabel);
+  assert.deepEqual(withLib.log, bare.log);
+  assert.equal(withLib.court.filter((c) => c.libero).length, 1);
+  app.setLibero(false);
+  assert.deepEqual(state(app), bare, 'switching off restores the bare 5-1');
+  assert.match(app.status(), /Libero off/);
+});
+
+test('LIBERO: undo restores the libero swap along with lineup, rotation and phase', () => {
+  const app = liberoApp();
+  app.click('log-win'); // Rot 2 serve
+  app.click('log-loss');
+  const before = state(app);
+  app.click('log-win'); // Rot 3 serve: libero off for the serving middle
+  assert.equal(app.court().some((c) => c.libero), false);
+  app.click('undo-rally');
+  assert.deepEqual(state(app), before);
+  assert.equal(app.court()[4].libero, true);
+  assert.equal(app.liberoOn(), true, 'undo leaves the switch alone');
+});
+
+test('LIBERO: the switch survives reset and a new set, which restart from Rotation 1', () => {
+  const app = loadApp({ confirmAnswer: true });
+  app.setLibero(true);
+  app.click('log-win');
+  app.click('log-loss');
+  app.click('log-win'); // Rot 3
+  app.click('reset-match');
+  assert.equal(app.liberoOn(), true);
+  assert.equal(app.rotation(), 1);
+  assert.equal(app.court()[5].libero, true, 'Rot 1 receive: libero in for M2');
+  winSet(app);
+  assert.equal(app.setLabel(), 'Set 2');
+  assert.equal(app.liberoOn(), true);
+  assert.equal(app.court().filter((c) => c.libero).length, 1);
+});
+
+test('LIBERO: switching phase or losing serve says when the libero comes in or out', () => {
+  const app = liberoApp();
+  app.click('rotate-lineup');
+  app.click('rotate-lineup'); // Rot 3 receive: libero in for M1 at position 1
+  setMode(app, 'serve');
+  assert.equal(app.status(), 'M1 is in position 1 to serve: libero out, M1 stays in.');
+  app.click('log-loss'); // lose serve: back to receive, libero covers M1 again
+  assert.equal(app.mode(), 'Receive');
+  assert.equal(app.status(), 'Libero in for M1 at position 1.');
+  setMode(app, 'serve');
+  assert.equal(app.status(), 'M1 is in position 1 to serve: libero out, M1 stays in.');
+  app.click('rotate-lineup'); // Rot 4: M1 has served and moved to 6
+  assert.equal(app.status(), 'Rotation advanced clockwise after a side-out. Libero in for M1 at position 6.');
+  setMode(app, 'receive'); // same middle covered in both phases: nothing to announce
+  assert.equal(app.status(), 'Rotation advanced clockwise after a side-out. Libero in for M1 at position 6.');
 });

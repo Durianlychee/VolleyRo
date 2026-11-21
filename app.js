@@ -157,6 +157,14 @@
     { id: 'p11', role: 'OH2', label: 'Outside 4' }
   ];
 
+  // The optional libero (FIVB 19) is not one of the six rotating players. Under the
+  // "With libero" switch the libero stands in for the middle blocker in the back row,
+  // in the middle's spot, and never serves or plays in the front row. The lineup
+  // keeps the real six, so rotation and serving order are the same with it on or off.
+  const LIBERO = { id: 'libero', role: 'L', label: 'Libero' };
+  const BACK_ROW_COVER_ORDER = [5, 4, 0]; // lineup indexes: position 6, then 5, then 1
+  const isMiddle = (player) => /^M\d*$/.test(player.role);
+
   // FIVB 6.2: a set is won by the first team to 25 points with a two-point lead;
   // the deciding fifth set is played to 15.
   const SET_TARGET = 25;
@@ -179,10 +187,15 @@
   let rotationIndex = 0;
   let selectedOnCourt = lineup[0].id;
   let logExpanded = true;
+  // A lesson setting rather than match state: off for a first lesson on the bare 5-1,
+  // and kept through reset, new sets and undo.
+  let withLibero = false;
 
   const els = {
     court: document.getElementById('court'),
     rotLabel: document.getElementById('rot-label'),
+    liberoToggle: document.getElementById('libero-toggle'),
+    liberoNote: document.getElementById('libero-note'),
     modeLabel: document.getElementById('mode-label'),
     toggleMode: document.getElementById('toggle-mode'),
     swapPhase: document.getElementById('swap-phase'),
@@ -209,7 +222,10 @@
     nextSet: document.getElementById('next-set')
   };
 
-  function setMode(mode) {
+  // `announce` reports a libero change in the status line (a phase switch can bring the
+  // libero in or out); callers that set their own status leave it off.
+  function setMode(mode, announce = false) {
+    const before = liberoCover();
     currentMode = mode;
     els.modeLabel.textContent = mode === 'serve' ? 'Serve' : 'Receive';
     els.modeLabel.dataset.state = mode;
@@ -218,11 +234,16 @@
     els.toggleMode.textContent = nextToggle;
     els.swapPhase.textContent = nextToggle;
     renderCourt();
+    renderSelects();
     updateContext();
+    if (announce) {
+      const change = liberoChangeText(before, liberoCover());
+      if (change) setStatus(change, 'info');
+    }
   }
 
   function toggleMode() {
-    setMode(currentMode === 'serve' ? 'receive' : 'serve');
+    setMode(currentMode === 'serve' ? 'receive' : 'serve', true);
   }
 
   // The player in position 1 serves (FIVB 12.2.2.2), whatever their role.
@@ -244,31 +265,98 @@
     return setter === null ? base : `${base} · Setter in ${setter}`;
   }
 
+  // The middle the libero stands in for, as { index, middle } (index into the lineup),
+  // or null: switch off, no middle in the back row, or the middle is in position 1
+  // in the serve phase (the libero never serves, FIVB 19.3.1.4, so the middle serves).
+  function liberoCover(players = lineup, mode = currentMode) {
+    if (!withLibero) return null;
+    for (const index of BACK_ROW_COVER_ORDER) {
+      if (index === 0 && mode === 'serve') continue;
+      if (isMiddle(players[index])) return { index, middle: players[index] };
+    }
+    return null;
+  }
+
+  // What the libero is doing right now, in words, for the note under the court label.
+  function liberoNoteText() {
+    if (!withLibero) return '';
+    const cover = liberoCover();
+    const middles = lineup.map((player, index) => ({ player, index })).filter(({ player }) => isMiddle(player));
+    const front = middles.filter(({ index }) => FRONT_ROW.has(POSITIONS[index].num));
+    const frontNote = front.length ? ` ${front.map(({ player }) => player.role).join(' and ')} in the front row.` : '';
+    if (cover) {
+      const pos = POSITIONS[cover.index];
+      return `Libero in for ${cover.middle.role} at position ${pos.num} (${pos.code}).${frontNote}`;
+    }
+    const server = middles.find(({ index }) => index === 0);
+    if (currentMode === 'serve' && server) {
+      return `${server.player.role} serves from position 1 and stays in: the libero never serves, so the libero is off until the serve is over.${frontNote}`;
+    }
+    return `No middle in the back row, so the libero is off.${frontNote}`;
+  }
+
+  // What changed for the libero between two covers, for the status line after a rotation.
+  function liberoChangeText(before, after) {
+    const sameMiddle = before && after && before.middle.id === after.middle.id;
+    if (sameMiddle) return '';
+    const parts = [];
+    if (before) {
+      const index = lineup.findIndex((player) => player.id === before.middle.id);
+      const num = index < 0 ? null : POSITIONS[index].num;
+      if (num !== null && FRONT_ROW.has(num)) {
+        parts.push(`${before.middle.role} rotates to the front row (position ${num}): libero out, ${before.middle.role} back in.`);
+      } else if (num === 1) {
+        parts.push(`${before.middle.role} is in position 1 to serve: libero out, ${before.middle.role} stays in.`);
+      } else {
+        parts.push(`Libero out, ${before.middle.role} back in.`);
+      }
+    }
+    if (after) {
+      parts.push(`Libero in for ${after.middle.role} at position ${POSITIONS[after.index].num}.`);
+    }
+    return parts.join(' ');
+  }
+
+  function renderLiberoNote() {
+    els.liberoToggle.checked = withLibero;
+    els.liberoNote.textContent = liberoNoteText();
+    els.liberoNote.classList.toggle('is-hidden', !withLibero);
+  }
+
   function renderCourt() {
     els.court.innerHTML = '';
     const layout = layouts[currentMode][rotationIndex];
     const serverId = getServerId();
+    const cover = liberoCover();
     els.rotLabel.textContent = rotationLabel();
-    lineup.forEach((player, index) => {
+    renderLiberoNote();
+    lineup.forEach((slotPlayer, index) => {
       const spot = layout[index];
       const pos = POSITIONS[index];
+      const covered = cover !== null && cover.index === index;
+      // The token shows whoever is on court; selection and serving follow the
+      // lineup slot, so tapping the libero targets the middle they replaced.
+      const player = covered ? LIBERO : slotPlayer;
       const btn = document.createElement('button');
       const rowClass = FRONT_ROW.has(pos.num) ? 'front-row' : 'back-row';
       const classes = ['player', rowClass];
-      const selected = selectedOnCourt === player.id;
+      const selected = selectedOnCourt === slotPlayer.id;
       if (selected) classes.push('selected');
-      if (serverId === player.id) classes.push('serving');
+      if (covered) classes.push('libero');
+      if (serverId === slotPlayer.id) classes.push('serving');
       btn.className = classes.join(' ');
       btn.style.setProperty('--x', String(spot.x));
       btn.style.setProperty('--y', String(spot.y));
-      const serverBadge = serverId === player.id ? '<span class="server-badge">Serving</span>' : '';
+      const serverBadge = serverId === slotPlayer.id ? '<span class="server-badge">Serving</span>' : '';
+      const swapBadge = covered ? `<span class="swap-badge">for ${slotPlayer.role}</span>` : '';
       btn.innerHTML = `<span class="role">${player.role}</span>
         <span class="name">${player.label}</span>
         ${serverBadge}
+        ${swapBadge}
         <span class="pos-label">${pos.code}</span>`;
       btn.addEventListener('click', () => {
-        selectedOnCourt = player.id;
-        els.onCourtSelect.value = player.id;
+        selectedOnCourt = slotPlayer.id;
+        els.onCourtSelect.value = slotPlayer.id;
         renderCourt();
       });
       els.court.appendChild(btn);
@@ -310,11 +398,13 @@
   function renderSelects() {
     const previousChoice = selectedOnCourt;
     els.onCourtSelect.innerHTML = '';
+    const cover = liberoCover();
     lineup.forEach((player, index) => {
       const option = document.createElement('option');
       const pos = POSITIONS[index];
+      const liberoIn = cover !== null && cover.index === index ? ' (libero in)' : '';
       option.value = player.id;
-      option.textContent = `${pos.num} (${pos.code}) - ${player.role} ${player.label}`;
+      option.textContent = `${pos.num} (${pos.code}) - ${player.role} ${player.label}${liberoIn}`;
       els.onCourtSelect.appendChild(option);
     });
     const chosen = lineup.find((p) => p.id === previousChoice);
@@ -397,12 +487,16 @@
     els.undo.disabled = undoStack.length === 0;
   }
 
-  function rotateLineup() {
+  // `phaseAfter` is the phase play continues in: a side-out win rotates while still in
+  // receive but goes on to serve, and the libero change depends on which phase it is.
+  function rotateLineup(phaseAfter = currentMode) {
+    const before = liberoCover();
     const moved = lineup.shift();
     lineup.push(moved);
     rotationIndex = (rotationIndex + 1) % 6;
     selectedOnCourt = lineup[0].id;
-    setStatus('Rotation advanced clockwise after a side-out.', 'info');
+    const change = liberoChangeText(before, liberoCover(lineup, phaseAfter));
+    setStatus(`Rotation advanced clockwise after a side-out.${change ? ` ${change}` : ''}`, 'info');
     renderCourt();
     renderSelects();
     updateContext();
@@ -453,13 +547,13 @@
     if (won) {
       scores.us += 1;
       if (before === 'receive') {
-        rotateLineup();
+        rotateLineup('serve');
         setMode('serve');
       }
     } else {
       scores.opp += 1;
       if (before === 'serve') {
-        setMode('receive');
+        setMode('receive', true);
       }
     }
     renderScores();
@@ -579,6 +673,18 @@
     setStatus('Session reset. Set 1, back in receive to start.', 'info');
   }
 
+  function toggleLibero() {
+    withLibero = Boolean(els.liberoToggle.checked);
+    renderCourt();
+    renderSelects();
+    setStatus(
+      withLibero
+        ? 'Libero on: the libero replaces the back-row middle, who returns on reaching the front row. The libero never serves.'
+        : 'Libero off: the bare 5-1, with both middles playing every rotation.',
+      'info'
+    );
+  }
+
   function toggleLogList() {
     logExpanded = !logExpanded;
     applyLogVisibility();
@@ -587,7 +693,8 @@
   function initEvents() {
     els.toggleMode.addEventListener('click', toggleMode);
     els.swapPhase.addEventListener('click', toggleMode);
-    els.rotate.addEventListener('click', rotateLineup);
+    els.rotate.addEventListener('click', () => rotateLineup());
+    els.liberoToggle.addEventListener('change', toggleLibero);
     els.makeSub.addEventListener('click', makeSubstitution);
     els.logWin.addEventListener('click', () => logRally(true));
     els.logLoss.addEventListener('click', () => logRally(false));
