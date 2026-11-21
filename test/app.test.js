@@ -639,3 +639,16 @@ test('SET: confirmed reset goes back to Set 1', () => {
   assert.equal(app.mode(), 'Receive');
   assert.equal(app.setOver(), false);
 });
+
+// --- Visual cues -------------------------------------------------------------
+
+test('court and phase pill carry the current phase so CSS can colour it', () => {
+  const app = loadApp();
+  assert.equal(app.els.court.dataset.phase, 'receive');
+  assert.equal(app.el('mode-label').dataset.state, 'receive');
+  app.click('toggle-mode');
+  assert.equal(app.els.court.dataset.phase, 'serve');
+  assert.equal(app.el('mode-label').dataset.state, 'serve');
+  app.click('swap-phase');
+  assert.equal(app.els.court.dataset.phase, 'receive');
+});

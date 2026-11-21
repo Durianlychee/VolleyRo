@@ -213,6 +213,7 @@
     currentMode = mode;
     els.modeLabel.textContent = mode === 'serve' ? 'Serve' : 'Receive';
     els.modeLabel.dataset.state = mode;
+    els.court.dataset.phase = mode;
     const nextToggle = mode === 'serve' ? 'Switch to receive' : 'Switch to serve';
     els.toggleMode.textContent = nextToggle;
     els.swapPhase.textContent = nextToggle;

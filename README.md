@@ -9,8 +9,9 @@ Solo volleyball rotation, substitution, and rally tracker built as a lightweight
 - Substitutions between on-court slots and bench players with instant lineup refresh.
 - Rally tracker with win/loss logging, score updates, undo of the last rally, collapsible recent log, and rotation awareness in the log.
 - FIVB set end: a set is won at 25 points with a two-point lead (15 in the fifth set), then a prompt starts the next set. Only the current set number is tracked; there is no match score.
-- Serving indicator in serve phase and front-row vs back-row color cues on the court.
-- Calm, readable palette using: #f5f6f8 (bg), #eef0f3 (panel), #e3e7ed (surface), #6ba3c4 (accent), #b7d6e8 (accent-2), #d9e2ec/#cfd6df (court), #9aa8ba (lines), #5a6472 (muted), #e0a0a6 (loss), plus #336b8f (accent ink: status text, front-row cards, serve phase) and #a8434f (loss ink: error text) where text or cues need WCAG AA contrast.
+- Serving indicator in serve phase. Front-row players are filled tokens and back-row players outlined tokens; the token colour, court border and phase pill follow the phase (blue = serve, warm clay = receive).
+- Volleyball-court icon (`favicon.svg`, PNG fallbacks and `manifest.webmanifest`).
+- Calm, readable palette using: #f5f6f8 (bg), #eef0f3 (panel), #e3e7ed (surface), #6ba3c4 (accent), #b7d6e8 (accent-2), #d9e2ec/#cfd6df (court), #9aa8ba (lines), #5a6472 (muted), #e0a0a6 (loss), plus #336b8f (accent ink: status text, serve phase tokens), #9c5a2a (receive phase tokens) and #a8434f (loss ink: error text) where text or cues need WCAG AA contrast.
 
 ## Tech Stack
 - HTML + CSS + vanilla JavaScript.
