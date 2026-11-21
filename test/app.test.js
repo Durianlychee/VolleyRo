@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { loadApp } = require('./harness');
+const { loadApp, fakeWakeLock, fakeSession } = require('./harness');
 
 const CODES = ['RB', 'RF', 'MF', 'LF', 'LB', 'MB'];
 const FRONT = new Set(['RF', 'MF', 'LF']);
@@ -955,4 +955,133 @@ test('LIBERO: switching phase or losing serve says when the libero comes in or o
   assert.equal(app.status(), 'Rotation advanced clockwise after a side-out. Libero in for M1 at position 6.');
   setMode(app, 'receive'); // same middle covered in both phases: nothing to announce
   assert.equal(app.status(), 'Rotation advanced clockwise after a side-out. Libero in for M1 at position 6.');
+});
+
+// Keep-screen-awake switch (Screen Wake Lock API).
+const tick = () => new Promise((resolve) => setImmediate(resolve));
+const flip = (app, on) => {
+  const box = app.el('keep-awake');
+  box.checked = on;
+  box.fire('change');
+};
+
+test('wake lock: switch stays hidden and inert when the API is unsupported', async () => {
+  const app = loadApp();
+  await tick();
+  assert.notEqual(app.el('awake-wrap').hidden, false);
+  assert.equal((app.el('keep-awake').listeners.change || []).length, 0);
+  assert.doesNotThrow(() => flip(app, true));
+  await tick();
+  assert.equal(app.el('awake-status').textContent || '', '');
+});
+
+test('wake lock: switch shows and is off by default, with no lock requested', async () => {
+  const wl = fakeWakeLock();
+  const app = loadApp({ wakeLock: wl, session: fakeSession() });
+  await tick();
+  assert.equal(app.el('awake-wrap').hidden, false);
+  assert.notEqual(app.el('keep-awake').checked, true);
+  assert.equal(wl.requests, 0);
+});
+
+test('wake lock: turning it on holds a lock, turning it off releases it', async () => {
+  const wl = fakeWakeLock();
+  const app = loadApp({ wakeLock: wl, session: fakeSession() });
+  flip(app, true);
+  await tick();
+  assert.equal(wl.held, 1);
+  flip(app, false);
+  await tick();
+  assert.equal(wl.held, 0);
+});
+
+test('wake lock: hide and show with a lock still held does not stack locks', async () => {
+  const wl = fakeWakeLock();
+  const app = loadApp({ wakeLock: wl, session: fakeSession() });
+  flip(app, true);
+  await tick();
+  // Browser releases the lock on hide; the app only learns via the release event.
+  const dropped = wl.held;
+  app.setVisibility('hidden');
+  app.setVisibility('visible');
+  await tick();
+  assert.equal(dropped, 1);
+  assert.equal(wl.held, 1, 'still exactly one lock when visible with one already held');
+});
+
+test('wake lock: lock dropped by the browser is requested again on return', async () => {
+  const wl = fakeWakeLock();
+  const locks = [];
+  const origRequest = wl.request;
+  wl.request = async (t) => { const s = await origRequest(t); locks.push(s); return s; };
+  const app = loadApp({ wakeLock: wl, session: fakeSession() });
+  flip(app, true);
+  await tick();
+  app.setVisibility('hidden');
+  locks[0].drop();
+  assert.equal(wl.held, 0);
+  app.setVisibility('visible');
+  await tick();
+  assert.equal(wl.held, 1);
+  assert.equal(wl.requests, 2);
+});
+
+test('wake lock: not re-acquired on return when the switch is off', async () => {
+  const wl = fakeWakeLock();
+  const app = loadApp({ wakeLock: wl, session: fakeSession() });
+  flip(app, true);
+  await tick();
+  flip(app, false);
+  await tick();
+  app.setVisibility('visible');
+  await tick();
+  assert.equal(wl.requests, 1);
+  assert.equal(wl.held, 0);
+});
+
+test('wake lock: the choice is remembered for the session only', async () => {
+  const session = fakeSession();
+  const first = loadApp({ wakeLock: fakeWakeLock(), session });
+  flip(first, true);
+  await tick();
+  assert.equal(session.data['volleyro-keep-awake'], '1');
+
+  const wl = fakeWakeLock();
+  const reloaded = loadApp({ wakeLock: wl, session });
+  await tick();
+  assert.equal(reloaded.el('keep-awake').checked, true);
+  assert.equal(wl.held, 1);
+
+  const fresh = loadApp({ wakeLock: fakeWakeLock(), session: fakeSession() });
+  assert.notEqual(fresh.el('keep-awake').checked, true);
+});
+
+test('wake lock: a refused request switches back off and says so', async () => {
+  const wl = fakeWakeLock({ fail: true });
+  const session = fakeSession();
+  const app = loadApp({ wakeLock: wl, session });
+  flip(app, true);
+  await tick();
+  assert.equal(app.el('keep-awake').checked, false);
+  assert.equal(session.data['volleyro-keep-awake'], '0');
+  assert.match(app.el('awake-status').textContent, /Could not keep the screen awake/);
+});
+
+test('wake lock: works when session storage is unavailable', async () => {
+  const wl = fakeWakeLock();
+  const session = { getItem() { throw new Error('blocked'); }, setItem() { throw new Error('blocked'); } };
+  const app = loadApp({ wakeLock: wl, session });
+  flip(app, true);
+  await tick();
+  assert.equal(wl.held, 1);
+});
+
+test('wake lock: reset session leaves the switch alone', async () => {
+  const wl = fakeWakeLock();
+  const app = loadApp({ wakeLock: wl, session: fakeSession() });
+  flip(app, true);
+  await tick();
+  app.click('reset-match');
+  await tick();
+  assert.equal(wl.held, 1);
 });

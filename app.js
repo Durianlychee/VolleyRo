@@ -219,8 +219,90 @@
     rallyButtons: document.getElementById('rally-buttons'),
     setEnd: document.getElementById('set-end'),
     setEndText: document.getElementById('set-end-text'),
-    nextSet: document.getElementById('next-set')
+    nextSet: document.getElementById('next-set'),
+    awakeWrap: document.getElementById('awake-wrap'),
+    awakeToggle: document.getElementById('keep-awake'),
+    awakeStatus: document.getElementById('awake-status')
   };
+
+  // Keep-screen-awake switch (Screen Wake Lock API). Off by default. The choice is
+  // remembered for this browser session only, and the switch is hidden where the
+  // API is missing. The browser drops the lock whenever the page is hidden, so it
+  // is requested again when the page becomes visible.
+  const AWAKE_KEY = 'volleyro-keep-awake';
+  const wakeSupported = typeof navigator !== 'undefined' && !!navigator.wakeLock
+    && typeof navigator.wakeLock.request === 'function';
+  let wakeWanted = false;
+  let wakeSentinel = null;
+  let wakePending = false;
+
+  function readAwakeChoice() {
+    try { return sessionStorage.getItem(AWAKE_KEY) === '1'; } catch (err) { return false; }
+  }
+
+  function saveAwakeChoice(on) {
+    try { sessionStorage.setItem(AWAKE_KEY, on ? '1' : '0'); } catch (err) { /* choice just is not kept */ }
+  }
+
+  function setAwakeStatus(message) {
+    els.awakeStatus.textContent = message;
+  }
+
+  async function acquireWakeLock() {
+    if (!wakeSupported || !wakeWanted || wakeSentinel || wakePending) return;
+    if (document.visibilityState === 'hidden') return;
+    wakePending = true;
+    try {
+      const sentinel = await navigator.wakeLock.request('screen');
+      if (!wakeWanted) {
+        // Switched off while the request was in flight.
+        sentinel.release().catch(() => {});
+        return;
+      }
+      wakeSentinel = sentinel;
+      sentinel.addEventListener('release', () => {
+        if (wakeSentinel === sentinel) wakeSentinel = null;
+      });
+      setAwakeStatus('Screen will stay on.');
+    } catch (err) {
+      els.awakeToggle.checked = false;
+      wakeWanted = false;
+      saveAwakeChoice(false);
+      setAwakeStatus('Could not keep the screen awake on this device.');
+    } finally {
+      wakePending = false;
+    }
+  }
+
+  function releaseWakeLock() {
+    const sentinel = wakeSentinel;
+    wakeSentinel = null;
+    if (sentinel) sentinel.release().catch(() => {});
+  }
+
+  function setKeepAwake(on) {
+    wakeWanted = on;
+    saveAwakeChoice(on);
+    if (on) {
+      acquireWakeLock();
+    } else {
+      releaseWakeLock();
+      setAwakeStatus('');
+    }
+  }
+
+  function initWakeLock() {
+    if (!wakeSupported) return;
+    els.awakeWrap.hidden = false;
+    els.awakeToggle.addEventListener('change', (evt) => setKeepAwake(!!evt.target.checked));
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') acquireWakeLock();
+    });
+    if (readAwakeChoice()) {
+      els.awakeToggle.checked = true;
+      setKeepAwake(true);
+    }
+  }
 
   // `announce` reports a libero change in the status line (a phase switch can bring the
   // libero in or out); callers that set their own status leave it off.
@@ -721,5 +803,6 @@
   }
 
   initEvents();
+  initWakeLock();
   renderAll();
 })();

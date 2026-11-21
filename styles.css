@@ -87,6 +87,66 @@ p {
   justify-items: start;
 }
 
+.awake {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.awake[hidden] {
+  display: none;
+}
+
+.awake input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.awake-track {
+  position: relative;
+  flex: none;
+  width: 44px;
+  height: 26px;
+  border-radius: 13px;
+  background: var(--line);
+  transition: background 0.15s;
+}
+
+.awake-track::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s;
+}
+
+.awake input:checked + .awake-track {
+  background: var(--accent-ink);
+}
+
+.awake input:checked + .awake-track::after {
+  transform: translateX(18px);
+}
+
+.awake input:focus-visible + .awake-track {
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 2px;
+}
+
+#awake-status {
+  min-height: 0;
+}
+
 .mode-pill {
   padding: 8px 14px;
   border-radius: 10px;
