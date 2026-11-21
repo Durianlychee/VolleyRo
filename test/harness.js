@@ -119,7 +119,8 @@ function loadApp({ confirmAnswer = true } = {}) {
     click: (id) => document.getElementById(id).click(),
     tapPlayer: (name) => card(name).click(),
     chooseBench: (name) => {
-      const opt = benchSelect.children.find((o) => o.textContent.endsWith(` ${name}`));
+      // Options read "<role> <label>"; match the label exactly so "Outside 1" never picks "Outside 3".
+      const opt = benchSelect.children.find((o) => o.textContent.slice(o.textContent.indexOf(' ') + 1) === name);
       benchSelect.value = opt.value;
     },
     sub(outName, inName) {

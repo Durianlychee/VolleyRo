@@ -5,6 +5,7 @@ Solo volleyball rotation, substitution, and rally tracker built as a lightweight
 ## Features
 - Interactive court map with serve/receive layouts for each 5-1 rotation (S1, OH1, M1, OPP, OH2, M2), matching diagrammed lanes.
 - Manual rotation, serve/receive toggle, and scoreboard with a session reset that asks for confirmation.
+- Players are named by role (Setter, Outside 1, Middle 1, Opposite, Outside 2, Middle 2 for the starters; Opposite 2, Outside 3, Middle 3, Middle 4, Outside 4 for the bench), so each court token shows its role at a glance, even after a substitution, and no real names are used.
 - Substitutions between on-court slots and bench players with instant lineup refresh.
 - Rally tracker with win/loss logging, score updates, undo of the last rally, collapsible recent log, and rotation awareness in the log.
 - FIVB set end: a set is won at 25 points with a two-point lead (15 in the fifth set), then a prompt starts the next set. Only the current set number is tracked; there is no match score.
@@ -32,7 +33,7 @@ Solo volleyball rotation, substitution, and rally tracker built as a lightweight
 - Reset: "Reset session" asks for confirmation, then clears scores, history and undo, and returns to Set 1 with the default lineup in receive (Rotation 1).
 
 ## Customization Ideas
-- Edit `defaultLineup` and `defaultBench` in `app.js` to rename players (`defaultLineup` is listed in rotational-position order for Rotation 1: position 1, the server, first).
+- Edit `defaultLineup` and `defaultBench` in `app.js` to change player labels (`defaultLineup` is listed in rotational-position order for Rotation 1: position 1, the server, first).
 - Adjust colors in `styles.css` by editing the CSS variables in the `:root` block.
 
 ## Tests
