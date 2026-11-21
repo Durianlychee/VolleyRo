@@ -79,10 +79,13 @@ const SELECTS = new Set(['on-court-select', 'bench-select']);
 // pre-fix version, to confirm the bug tests fail there).
 const APP_PATH = process.env.VOLLEYRO_APP || path.join(__dirname, '..', 'app.js');
 
-function loadApp({ confirmAnswer = true } = {}) {
+function loadApp({ confirmAnswer = true, wakeLock, session } = {}) {
   const els = {};
   const confirms = [];
+  const docListeners = {};
   const document = {
+    visibilityState: 'visible',
+    addEventListener: (type, fn) => { (docListeners[type] ||= []).push(fn); },
     getElementById: (id) => (els[id] ||= new El(SELECTS.has(id) ? 'select' : 'div')),
     createElement: (tag) => new El(tag)
   };
@@ -91,7 +94,9 @@ function loadApp({ confirmAnswer = true } = {}) {
     return typeof confirmAnswer === 'function' ? confirmAnswer(message) : confirmAnswer;
   };
   const src = fs.readFileSync(APP_PATH, 'utf8');
-  vm.runInNewContext(src, { document, console, confirm, window: { confirm } }, { filename: APP_PATH });
+  const sandbox = { document, console, confirm, window: { confirm }, navigator: wakeLock ? { wakeLock } : {} };
+  if (session) sandbox.sessionStorage = session;
+  vm.runInNewContext(src, sandbox, { filename: APP_PATH });
 
   const strip = (s) => s.replace(/<[^>]*>/g, '').trim();
   const part = (html, cls) => ((html.match(new RegExp(`class="${cls}">([^<]*)<`)) || [])[1] || '').trim();
@@ -115,6 +120,10 @@ function loadApp({ confirmAnswer = true } = {}) {
 
   return {
     els,
+    setVisibility(state) {
+      document.visibilityState = state;
+      (docListeners.visibilitychange || []).forEach((fn) => fn({}));
+    },
     confirms,
     court,
     el: (id) => document.getElementById(id),
@@ -157,4 +166,46 @@ function loadApp({ confirmAnswer = true } = {}) {
   };
 }
 
-module.exports = { loadApp };
+// Fake Screen Wake Lock API: counts requests and tracks which locks are held.
+function fakeWakeLock({ fail = false } = {}) {
+  const api = {
+    requests: 0,
+    held: 0,
+    async request(type) {
+      api.requests += 1;
+      if (fail) throw new Error('NotAllowedError');
+      api.held += 1;
+      let released = false;
+      const listeners = [];
+      return {
+        type,
+        addEventListener: (name, fn) => listeners.push(fn),
+        async release() {
+          if (released) return;
+          released = true;
+          api.held -= 1;
+          listeners.forEach((fn) => fn());
+        },
+        // What a browser does when the page is hidden.
+        drop() {
+          if (released) return;
+          released = true;
+          api.held -= 1;
+          listeners.forEach((fn) => fn());
+        }
+      };
+    }
+  };
+  return api;
+}
+
+function fakeSession(initial = {}) {
+  const data = { ...initial };
+  return {
+    data,
+    getItem: (k) => (k in data ? data[k] : null),
+    setItem: (k, v) => { data[k] = String(v); }
+  };
+}
+
+module.exports = { loadApp, fakeWakeLock, fakeSession };
