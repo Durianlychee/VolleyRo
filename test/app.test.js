@@ -544,3 +544,40 @@ test('SET: confirmed reset goes back to Set 1', () => {
   assert.equal(app.mode(), 'Receive');
   assert.equal(app.setOver(), false);
 });
+
+// --- Visual cues -------------------------------------------------------------
+
+test('court and phase pill carry the current phase so CSS can colour it', () => {
+  const app = loadApp();
+  assert.equal(app.els.court.dataset.phase, 'receive');
+  assert.equal(app.el('mode-label').dataset.state, 'receive');
+  app.click('toggle-mode');
+  assert.equal(app.els.court.dataset.phase, 'serve');
+  assert.equal(app.el('mode-label').dataset.state, 'serve');
+  app.click('swap-phase');
+  assert.equal(app.els.court.dataset.phase, 'receive');
+});
+
+test('phase colours and row tokens meet WCAG AA contrast', () => {
+  const css = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'styles.css'), 'utf8');
+  const v = (name) => css.match(new RegExp(`--${name}:\\s*(#[0-9a-f]{6})`, 'i'))[1];
+  const lum = (hex) => {
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
+      .map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const ratio = (a, b) => {
+    const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
+    return (hi + 0.05) / (lo + 0.05);
+  };
+  for (const phase of ['serve', 'receive']) {
+    const ink = v(`${phase}-ink`);
+    assert.ok(ratio('#ffffff', ink) >= 4.5, `${phase}: white text on filled front-row token`);
+    assert.ok(ratio(v('text'), v('back-surface')) >= 4.5, 'dark text on back-row token');
+    for (const court of [v('court-a'), v('court-b')]) {
+      assert.ok(ratio(ink, court) >= 3, `${phase}: token outline against court ${court}`);
+    }
+    assert.ok(ratio(ink, v('back-surface')) >= 3, `${phase}: outline against back-row fill`);
+    assert.ok(ratio(v('text'), v(`${phase}-tint`)) >= 4.5, `${phase}: text on tint`);
+  }
+});

@@ -12,9 +12,15 @@
   --border: #d1d6de;
   --accent-ink: #336b8f;
   --loss-ink: #a8434f;
-  --front-surface: #336b8f;
+  /* Phase colours: blue = serve, warm clay = receive. Both give 5:1+ with white text. */
+  --serve-ink: #336b8f;
+  --serve-tint: #dbe9f2;
+  --receive-ink: #9c5a2a;
+  --receive-tint: #f3e6da;
+  --phase-ink: var(--receive-ink);
+  --phase-tint: var(--receive-tint);
   --front-text: #ffffff;
-  --back-surface: #e8edf4;
+  --back-surface: #f7f9fb;
   --shadow: rgba(24, 32, 43, 0.16);
   --win: #7bbf96;
   --loss: #e0a0a6;
@@ -81,17 +87,20 @@ p {
 .mode-pill {
   padding: 8px 14px;
   border-radius: 10px;
-  background: rgba(107, 163, 196, 0.22);
   border: 1px solid var(--border);
-  color: var(--text);
   font-weight: 700;
   letter-spacing: 0.02em;
 }
 
-.mode-pill[data-state="serve"] {
-  background: var(--accent-ink);
-  border-color: var(--accent-ink);
+.mode-pill {
+  background: var(--receive-ink);
+  border-color: var(--receive-ink);
   color: #ffffff;
+}
+
+.mode-pill[data-state="serve"] {
+  background: var(--serve-ink);
+  border-color: var(--serve-ink);
 }
 
 .scoreboard {
@@ -184,9 +193,19 @@ p {
   aspect-ratio: 1 / calc(var(--play) + var(--strip));
   background: linear-gradient(180deg, var(--court-a) 0%, var(--court-a) calc(50% * var(--play-frac)), var(--court-b) calc(50% * var(--play-frac)), var(--court-b) 100%);
   border-radius: 20px;
-  border: 2px solid var(--border);
+  border: 2px solid var(--phase-ink);
   overflow: hidden;
   box-shadow: inset 0 0 0 1px rgba(24, 32, 43, 0.06);
+}
+
+.court[data-phase="serve"] {
+  --phase-ink: var(--serve-ink);
+  --phase-tint: var(--serve-tint);
+}
+
+.court[data-phase="receive"] {
+  --phase-ink: var(--receive-ink);
+  --phase-tint: var(--receive-tint);
 }
 
 .court::before {
@@ -216,12 +235,13 @@ p {
   position: absolute;
   left: clamp(calc(var(--tok-w) / 2), calc(var(--x) * 1%), calc(100% - var(--tok-w) / 2));
   top: clamp(calc(var(--tok-h) / 2), calc(var(--y) * var(--play) * 1cqw), calc(100% - var(--tok-h) / 2));
+  z-index: 1;
   transform: translate(-50%, -50%);
   width: var(--tok-w);
   height: var(--tok-h);
   border-radius: clamp(8px, 2cqw, 16px);
   background: var(--back-surface);
-  border: 2px solid transparent;
+  border: 2px solid var(--phase-ink);
   color: var(--text);
   padding: clamp(2px, 0.8cqw, 8px) clamp(2px, 1cqw, 10px);
   display: flex;
@@ -247,14 +267,14 @@ p {
 
 .player:hover {
   transform: translate(-50%, -50%) scale(1.03);
-  border-color: rgba(107, 163, 196, 0.8);
+  border-color: var(--text);
 }
 
 .player .role {
   display: inline-block;
   padding: 1px clamp(4px, 1cqw, 8px);
   border-radius: 999px;
-  background: rgba(183, 214, 232, 0.55);
+  background: var(--phase-tint);
   color: var(--text);
   font-size: 0.95em;
   font-weight: 700;
@@ -273,13 +293,14 @@ p {
   background: var(--back-surface);
 }
 
+/* Back row: outlined token. Front row: filled token. Same phase colour, so the row reads by shape. */
 .player.front-row {
-  background: var(--front-surface);
+  background: var(--phase-ink);
   color: var(--front-text);
 }
 
 .player.front-row .role {
-  background: rgba(0, 0, 0, 0.22);
+  background: rgba(0, 0, 0, 0.26);
   color: var(--front-text);
 }
 
@@ -289,6 +310,8 @@ p {
 
 .player.selected {
   border-color: var(--text);
+  outline: 3px solid var(--text);
+  outline-offset: 2px;
   box-shadow: 0 10px 22px rgba(24, 32, 43, 0.3);
 }
 
@@ -308,7 +331,7 @@ p {
   display: inline-block;
   padding: 1px clamp(4px, 1cqw, 8px);
   border-radius: 10px;
-  background: rgba(107, 163, 196, 0.6);
+  background: var(--phase-tint);
   color: var(--text);
   font-weight: 800;
   font-size: 0.9em;
