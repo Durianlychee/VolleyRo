@@ -5,7 +5,7 @@ Solo volleyball rotation, substitution, and rally tracker built as a lightweight
 ## Features
 - Interactive court map with serve/receive layouts for each 5-1 rotation (S1, OH1, M1, OPP, OH2, M2), matching diagrammed lanes.
 - Manual rotation, serve/receive toggle, and scoreboard with a session reset that asks for confirmation.
-- Players are named by role (Setter, Outside 1, Middle 1, Opposite, Outside 2, Middle 2 on court; Bench Opposite, Bench Outside 1 and so on for the bench), so each court token shows its role at a glance and no real names are used.
+- Players are named by role (Setter, Outside 1, Middle 1, Opposite, Outside 2, Middle 2 for the starters; Opposite 2, Outside 3, Middle 3, Middle 4, Outside 4 for the bench), so each court token shows its role at a glance, even after a substitution, and no real names are used.
 - Substitutions between on-court slots and bench players with instant lineup refresh.
 - Rally tracker with win/loss logging, score updates, undo of the last rally, collapsible recent log, and rotation awareness in the log.
 - Serving indicator in serve phase and front-row vs back-row color cues on the court.

@@ -148,11 +148,11 @@
   ];
 
   const defaultBench = [
-    { id: 'p7', role: 'OPP', label: 'Bench Opposite' },
-    { id: 'p8', role: 'OH1', label: 'Bench Outside 1' },
-    { id: 'p9', role: 'M1', label: 'Bench Middle 1' },
-    { id: 'p10', role: 'M2', label: 'Bench Middle 2' },
-    { id: 'p11', role: 'OH2', label: 'Bench Outside 2' }
+    { id: 'p7', role: 'OPP', label: 'Opposite 2' },
+    { id: 'p8', role: 'OH1', label: 'Outside 3' },
+    { id: 'p9', role: 'M1', label: 'Middle 3' },
+    { id: 'p10', role: 'M2', label: 'Middle 4' },
+    { id: 'p11', role: 'OH2', label: 'Outside 4' }
   ];
 
   const scores = { us: 0, opp: 0 };

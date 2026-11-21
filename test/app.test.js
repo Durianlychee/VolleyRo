@@ -83,11 +83,11 @@ function state(app) {
 // --- Role labels ---------------------------------------------------------------
 
 const STARTER_LABELS = ['Setter', 'Outside 1', 'Middle 1', 'Opposite', 'Outside 2', 'Middle 2'];
-const BENCH_LABELS = ['Bench Opposite', 'Bench Outside 1', 'Bench Middle 1', 'Bench Middle 2', 'Bench Outside 2'];
+const BENCH_LABELS = ['Opposite 2', 'Outside 3', 'Middle 3', 'Middle 4', 'Outside 4'];
 // Each label must agree with the role code shown above it on the token.
 const LABEL_ROLE = {
   Setter: 'S1', 'Outside 1': 'OH1', 'Middle 1': 'M1', Opposite: 'OPP', 'Outside 2': 'OH2', 'Middle 2': 'M2',
-  'Bench Opposite': 'OPP', 'Bench Outside 1': 'OH1', 'Bench Middle 1': 'M1', 'Bench Middle 2': 'M2', 'Bench Outside 2': 'OH2'
+  'Opposite 2': 'OPP', 'Outside 3': 'OH1', 'Middle 3': 'M1', 'Middle 4': 'M2', 'Outside 4': 'OH2'
 };
 
 test('court tokens show role labels in rotational-position order', () => {
@@ -102,11 +102,10 @@ test('bench players carry role-style labels that match their role codes', () => 
 });
 
 test('every player label is unique, so no two players can be confused', () => {
-  const labels = [...STARTER_LABELS, ...BENCH_LABELS];
-  assert.equal(new Set(labels).size, labels.length);
   const app = loadApp();
   const shown = [...app.court().map((c) => c.name), ...app.bench().map((o) => o.slice(o.indexOf(' ') + 1))];
-  assert.deepEqual([...shown].sort(), [...labels].sort());
+  assert.equal(shown.length, 11, 'six starters and five bench players');
+  assert.equal(new Set(shown).size, shown.length, `duplicate label in ${shown.join(', ')}`);
 });
 
 // Oracle: the captain's list of role labels. A real name anywhere in the UI would not be in it.
@@ -122,7 +121,7 @@ test('every name shown in the UI is a role label, through rotations and subs', (
     for (const label of shown()) assert.ok(known.has(label), `${msg}: "${label}" is not a role label`);
   };
   check('start');
-  for (const [outName, inName] of [['Setter', 'Bench Opposite'], ['Middle 2', 'Bench Middle 2'], ['Outside 2', 'Bench Outside 2']]) {
+  for (const [outName, inName] of [['Setter', 'Opposite 2'], ['Middle 2', 'Middle 4'], ['Outside 2', 'Outside 4']]) {
     app.sub(outName, inName);
     check(`after ${inName} in for ${outName}`);
     app.click('rotate-lineup');
@@ -132,15 +131,15 @@ test('every name shown in the UI is a role label, through rotations and subs', (
 
 test('substitution swaps role labels between court and bench', () => {
   const app = loadApp();
-  app.sub('Outside 1', 'Bench Outside 1');
+  app.sub('Outside 1', 'Outside 3');
   const court = app.court();
-  assert.equal(court[1].name, 'Bench Outside 1');
+  assert.equal(court[1].name, 'Outside 3');
   assert.equal(court[1].role, 'OH1');
   assert.equal(court[1].pos, 'RF');
   assert.ok(!court.some((c) => c.name === 'Outside 1'));
   assert.ok(app.bench().includes('OH1 Outside 1'), app.bench().join(', '));
-  assert.ok(!app.bench().includes('OH1 Bench Outside 1'));
-  assert.equal(app.el('sub-status').textContent, 'Bench Outside 1 (OH1) in for Outside 1.');
+  assert.ok(!app.bench().includes('OH1 Outside 3'));
+  assert.equal(app.el('sub-status').textContent, 'Outside 3 (OH1) in for Outside 1.');
 });
 
 // --- Rally and rotation rules (characterization) ---------------------------
@@ -268,7 +267,7 @@ test('serving badge is on the player in position 1 in every serve rotation', () 
   eachRotation(app, 'serve', (k, m) => assertServerInPositionOne(app, m, `rot ${k + 1}`));
 });
 
-for (const [outName, inName] of [['Outside 1', 'Bench Opposite'], ['Setter', 'Bench Opposite'], ['Opposite', 'Bench Outside 1'], ['Middle 1', 'Bench Outside 1']]) {
+for (const [outName, inName] of [['Outside 1', 'Opposite 2'], ['Setter', 'Opposite 2'], ['Opposite', 'Outside 3'], ['Middle 1', 'Outside 3']]) {
   test(`BUG 1: serving badge follows position 1 after cross-role sub ${outName} -> ${inName}`, () => {
     const app = loadApp();
     const m = model();
@@ -309,9 +308,9 @@ test('BUG 2: highlighted card and Sub in target agree after each Rotate clockwis
 
 test('after a substitution the incoming player is highlighted and targeted', () => {
   const app = loadApp();
-  app.sub('Outside 1', 'Bench Outside 1');
-  assert.equal(app.court().find((c) => c.selected).name, 'Bench Outside 1');
-  assert.ok(app.subTarget().endsWith(' Bench Outside 1'), app.subTarget());
+  app.sub('Outside 1', 'Outside 3');
+  assert.equal(app.court().find((c) => c.selected).name, 'Outside 3');
+  assert.ok(app.subTarget().endsWith(' Outside 3'), app.subTarget());
 });
 
 // --- Bug 7: undo -------------------------------------------------------------
@@ -320,7 +319,7 @@ test('BUG 7: undo restores score, lineup, rotation and phase after each kind of 
   for (const [startMode, button] of [['receive', 'log-win'], ['receive', 'log-loss'], ['serve', 'log-win'], ['serve', 'log-loss']]) {
     const app = loadApp();
     // Get to a non-trivial state first: a sub, two rotations and a few rallies.
-    app.sub('Opposite', 'Bench Outside 1');
+    app.sub('Opposite', 'Outside 3');
     app.click('log-win');
     app.click('log-loss');
     app.click('log-win');
@@ -353,7 +352,7 @@ test('BUG 7: undo steps back one rally at a time to the start, then disables', (
 
 test('BUG 8: reset asks for confirmation and keeps everything when declined', () => {
   const app = loadApp({ confirmAnswer: false });
-  app.sub('Outside 1', 'Bench Outside 1');
+  app.sub('Outside 1', 'Outside 3');
   app.click('log-win');
   app.click('log-win');
   const before = state(app);
@@ -365,7 +364,7 @@ test('BUG 8: reset asks for confirmation and keeps everything when declined', ()
 test('BUG 8: confirmed reset restores the starting state and clears undo', () => {
   const fresh = state(loadApp());
   const app = loadApp({ confirmAnswer: true });
-  app.sub('Outside 1', 'Bench Outside 1');
+  app.sub('Outside 1', 'Outside 3');
   app.click('log-win');
   app.click('log-loss');
   app.click('reset-match');
@@ -391,7 +390,7 @@ test('rotation labels show play order and the setter position in every rotation'
   for (const mode of ['receive', 'serve']) {
     eachRotation(app, mode, (k, m) => {
       const setter = SETTER_BY_ROT[k];
-      assert.equal(m.where.Nasrul, setter, `model agrees: rot ${k + 1}`);
+      assert.equal(m.where.Setter, setter, `model agrees: rot ${k + 1}`);
       assert.equal(app.contextLabel(), `Rotation ${k + 1} · Setter in ${setter}`, `${mode} context rot ${k + 1}`);
       assert.equal(app.courtLabel(), `Rot ${k + 1} · Setter in ${setter}`, `${mode} court rot ${k + 1}`);
     });
@@ -412,9 +411,9 @@ test('rally log and undo status name the rotation and setter position', () => {
 test('setter position is read from the lineup and drops out when no setter is on court', () => {
   const app = loadApp();
   app.click('rotate-lineup');
-  app.click('rotate-lineup'); // Rot 3, setter Nasrul in 5
+  app.click('rotate-lineup'); // Rot 3, Setter in 5
   assert.equal(app.contextLabel(), 'Rotation 3 · Setter in 5');
-  app.sub('Nasrul', 'Atiq'); // OPP replaces the only setter
+  app.sub('Setter', 'Opposite 2'); // OPP replaces the only setter
   assert.equal(app.contextLabel(), 'Rotation 3');
   assert.equal(app.courtLabel(), 'Rot 3');
   app.click('log-win');
