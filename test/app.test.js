@@ -964,12 +964,14 @@ const flip = (app, on) => {
   box.fire('change');
 };
 
-test('wake lock: switch is hidden when the API is unsupported', () => {
+test('wake lock: switch stays hidden and inert when the API is unsupported', async () => {
   const app = loadApp();
-  // The markup ships hidden; the app only reveals it when the API exists.
-  const html = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'index.html'), 'utf8');
-  assert.match(html, /id="awake-wrap" hidden/);
+  await tick();
   assert.notEqual(app.el('awake-wrap').hidden, false);
+  assert.equal((app.el('keep-awake').listeners.change || []).length, 0);
+  assert.doesNotThrow(() => flip(app, true));
+  await tick();
+  assert.equal(app.el('awake-status').textContent || '', '');
 });
 
 test('wake lock: switch shows and is off by default, with no lock requested', async () => {
