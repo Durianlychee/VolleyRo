@@ -7,6 +7,7 @@ Solo volleyball rotation, substitution, and rally tracker built as a lightweight
 - Manual rotation, serve/receive toggle, and scoreboard with a session reset that asks for confirmation.
 - Substitutions between on-court slots and bench players with instant lineup refresh.
 - Rally tracker with win/loss logging, score updates, undo of the last rally, collapsible recent log, and rotation awareness in the log.
+- FIVB set end: a set is won at 25 points with a two-point lead (15 in the fifth set), then a prompt starts the next set. Only the current set number is tracked; there is no match score.
 - Serving indicator in serve phase and front-row vs back-row color cues on the court.
 - Calm, readable palette using: #f5f6f8 (bg), #eef0f3 (panel), #e3e7ed (surface), #6ba3c4 (accent), #b7d6e8 (accent-2), #d9e2ec/#cfd6df (court), #9aa8ba (lines), #5a6472 (muted), #e0a0a6 (loss), plus #336b8f (accent ink: status text, front-row cards, serve phase) and #a8434f (loss ink: error text) where text or cues need WCAG AA contrast.
 
@@ -24,9 +25,10 @@ Solo volleyball rotation, substitution, and rally tracker built as a lightweight
 - Serve/receive layouts: The label above the court names each rotation by play order and by where the setter stands, for example "Rot 2 · Setter in 6" (the setter moves 1, 6, 5, 4, 3, 2 as you play Rot 1 to 6; with no setter on court only the play order shows). It updates when you rotate, and the rally log, phase hint and undo message use the same naming; serve/receive positions update to the matching diagrammed pattern.
 - Serve/receive toggle: Use the header toggle or the court controls to switch phases; manual rotate is available for side-outs.
 - Rally tracking: Press win/loss buttons to update scores; when you win in receive the lineup auto-rotates and you gain serve. On a phone these buttons sit in a bar pinned to the bottom of the screen.
-- Undo: "Undo last rally" restores the score, lineup, rotation and serve/receive phase from just before the most recent logged rally (a substitution made after that rally is undone too). Press it again to step further back.
+- Set end: when a team reaches 25 with a two-point lead (15 in Set 5), the rally buttons give way to "Set N won by ..." and a "Start set N+1" button. Starting the next set clears the score and log, puts the players back in their Rotation 1 positions (substitutes stay on), and, for Sets 2 to 4, gives first serve to the team that received first in the set just played. Set 5 and a new match keep the current serve/receive phase, because a coin toss decides first serve there: the status line says so, and you switch with the serve/receive toggle. After Set 5 the button reads "Start new match" and goes back to Set 1.
+- Undo: "Undo last rally" restores the score, set, lineup, rotation and serve/receive phase from just before the most recent logged rally (a substitution made after that rally is undone too). Undoing a mis-tapped winning point reopens the set; undoing just after starting a new set returns to the end of the previous one. Press it again to step further back.
 - Log toggle: Use "Show/Hide log" to expand or collapse the recent rally list; the summary line always shows the latest outcome.
-- Reset: "Reset session" asks for confirmation, then clears scores, history and undo, and returns to the default lineup in receive (Rotation 1).
+- Reset: "Reset session" asks for confirmation, then clears scores, history and undo, and returns to Set 1 with the default lineup in receive (Rotation 1).
 
 ## Customization Ideas
 - Edit `defaultLineup` and `defaultBench` in `app.js` to rename players (`defaultLineup` is listed in rotational-position order for Rotation 1: position 1, the server, first).

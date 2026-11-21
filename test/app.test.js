@@ -357,3 +357,190 @@ test('setter position is read from the lineup and drops out when no setter is on
   app.click('log-win');
   assert.match(app.log()[0], /Rot 4, Mode: serve\./);
 });
+
+// --- Set end (FIVB 6.2: 25 with a two-point lead, 15 in the fifth set) ------
+
+// Log `us` won and `opp` lost rallies, alternating while both remain, so the
+// set is not decided early by a long run for one side.
+function points(app, us, opp) {
+  for (let i = 0; i < Math.max(us, opp); i += 1) {
+    if (i < us) app.click('log-win');
+    if (i < opp) app.click('log-loss');
+  }
+}
+
+// Play a whole set as a straight 25-0 (or 15-0) win and start the next one.
+function winSet(app) {
+  const target = app.setLabel() === 'Set 5' ? 15 : 25;
+  points(app, target, 0);
+  assert.equal(app.setOver(), true, `${app.setLabel()} over at ${app.score()}`);
+  app.click('next-set');
+}
+
+test('SET: the set starts as Set 1 and is not over at 0-0 or 24-24', () => {
+  const app = loadApp();
+  assert.equal(app.setLabel(), 'Set 1');
+  assert.equal(app.setOver(), false);
+  points(app, 24, 24);
+  assert.equal(app.score(), '24-24');
+  assert.equal(app.setOver(), false);
+  assert.equal(app.el('log-win').disabled, false);
+});
+
+test('SET: 25 points with a two-point lead wins the set and shows the prompt', () => {
+  const app = loadApp();
+  points(app, 24, 23);
+  assert.equal(app.setOver(), false, '24-23 is not a set');
+  app.click('log-win');
+  assert.equal(app.score(), '25-23');
+  assert.equal(app.setOver(), true);
+  assert.equal(app.setEndText(), 'Set 1 won by Us, 25-23.');
+  assert.equal(app.nextSetLabel(), 'Start set 2');
+  assert.equal(app.el('log-win').disabled, true, 'no more rallies once the set is won');
+  assert.equal(app.el('log-loss').disabled, true);
+  assert.match(app.log()[0], /Set 1 won by Us\./);
+});
+
+test('SET: deuce goes on past 25 until someone leads by two', () => {
+  const app = loadApp();
+  points(app, 24, 24);
+  app.click('log-loss'); // 24-25
+  assert.equal(app.setOver(), false, '24-25 needs a two-point lead');
+  app.click('log-win'); // 25-25
+  app.click('log-win'); // 26-25
+  assert.equal(app.setOver(), false, '26-25 needs a two-point lead');
+  app.click('log-loss'); // 26-26
+  app.click('log-loss'); // 26-27
+  app.click('log-loss'); // 26-28
+  assert.equal(app.score(), '26-28');
+  assert.equal(app.setOver(), true);
+  assert.equal(app.setEndText(), 'Set 1 won by Opp, 26-28.');
+});
+
+test('SET: undo of a mis-tapped winning point reopens the set', () => {
+  const app = loadApp();
+  points(app, 24, 20);
+  const before = state(app);
+  app.click('log-win');
+  assert.equal(app.setOver(), true);
+  app.click('undo-rally');
+  assert.equal(app.setOver(), false);
+  assert.equal(app.el('log-win').disabled, false);
+  assert.equal(app.el('log-loss').disabled, false);
+  assert.deepEqual(state(app), before);
+  app.click('log-loss');
+  assert.equal(app.score(), '24-21', 'rallies can be logged again');
+});
+
+test('SET: starting the next set resets the score and returns to Rotation 1, keeping subs', () => {
+  const app = loadApp();
+  app.sub('Luqman', 'Sulaiman');
+  for (let i = 0; i < 3; i += 1) { // three side-outs: Rotation 4
+    app.click('log-win');
+    app.click('log-loss');
+  }
+  assert.equal(app.rotation(), 4);
+  points(app, 22, 22);
+  assert.equal(app.score(), '25-25');
+  points(app, 0, 2);
+  assert.equal(app.setOver(), true);
+  app.click('next-set');
+  assert.equal(app.setLabel(), 'Set 2');
+  assert.equal(app.score(), '0-0');
+  assert.equal(app.setOver(), false);
+  assert.equal(app.rotation(), 1);
+  assert.deepEqual(app.log(), []);
+  const court = app.court();
+  assert.equal(court.find((c) => c.pos === 'RB').name, 'Nasrul', 'Rotation 1 server back in position 1');
+  assert.equal(court.find((c) => c.pos === 'RF').name, 'Sulaiman', 'the substitute keeps the replaced slot');
+  assert.ok(!court.some((c) => c.name === 'Luqman'));
+});
+
+test('SET: first serve alternates between sets (FIVB 12.1)', () => {
+  const app = loadApp();
+  assert.equal(app.mode(), 'Receive');
+  winSet(app);
+  assert.equal(app.mode(), 'Serve', 'received first in set 1, so serve first in set 2');
+  assert.equal(app.court().find((c) => c.serving).name, 'Nasrul');
+  winSet(app);
+  assert.equal(app.mode(), 'Receive', 'served first in set 2, so receive first in set 3');
+  winSet(app);
+  assert.equal(app.mode(), 'Serve', 'received first in set 3, so serve first in set 4');
+});
+
+test('SET: the deciding set and a new match keep the phase, as a coin toss decides (FIVB 7.1, 12.1)', () => {
+  const app = loadApp();
+  for (let i = 0; i < 3; i += 1) winSet(app);
+  assert.equal(app.setLabel(), 'Set 4');
+  assert.equal(app.mode(), 'Serve', 'received first in set 3, so serve first in set 4');
+  points(app, 25, 0);
+  app.click('next-set');
+  assert.equal(app.setLabel(), 'Set 5');
+  assert.equal(app.mode(), 'Serve', 'served first in set 4, but the deciding set does not alternate');
+  assert.match(app.status(), /coin toss/i);
+  app.click('log-loss'); // lose serve: now receiving
+  points(app, 15, 0);
+  assert.equal(app.mode(), 'Serve', 'won the fifth set while serving');
+  app.click('next-set');
+  assert.equal(app.setLabel(), 'Set 1');
+  assert.equal(app.mode(), 'Serve', 'a new match keeps the current phase');
+  assert.match(app.status(), /coin toss/i);
+  points(app, 25, 0);
+  app.click('next-set');
+  assert.equal(app.setLabel(), 'Set 2');
+  assert.equal(app.mode(), 'Receive', 'served first in set 1, so receive first in set 2');
+  assert.doesNotMatch(app.status(), /coin toss/i);
+});
+
+test('SET: the fifth set is won at 15 with a two-point lead', () => {
+  const app = loadApp();
+  for (let i = 0; i < 4; i += 1) winSet(app);
+  assert.equal(app.setLabel(), 'Set 5');
+  points(app, 14, 14);
+  assert.equal(app.setOver(), false, '14-14 in the fifth set');
+  app.click('log-win');
+  assert.equal(app.setOver(), false, '15-14 needs a two-point lead');
+  app.click('log-win');
+  assert.equal(app.score(), '16-14');
+  assert.equal(app.setOver(), true);
+  assert.equal(app.setEndText(), 'Set 5 won by Us, 16-14.');
+  assert.equal(app.nextSetLabel(), 'Start new match');
+  app.click('next-set');
+  assert.equal(app.setLabel(), 'Set 1', 'after the fifth set a new match starts');
+});
+
+test('SET: a 15-point lead does not end sets 1 to 4', () => {
+  const app = loadApp();
+  points(app, 15, 0);
+  assert.equal(app.setOver(), false);
+});
+
+test('SET: undo after starting the next set returns to the end of the previous set', () => {
+  const app = loadApp();
+  points(app, 25, 10);
+  const ended = state(app);
+  app.click('next-set');
+  app.click('log-win');
+  app.click('undo-rally');
+  assert.equal(app.setLabel(), 'Set 2');
+  assert.equal(app.score(), '0-0');
+  app.click('undo-rally');
+  assert.equal(app.setLabel(), 'Set 1');
+  assert.equal(app.setOver(), true);
+  assert.deepEqual(state(app), ended);
+  assert.match(app.status(), /Back to the end of Set 1: 25-10/);
+  app.click('undo-rally');
+  assert.equal(app.score(), '24-10');
+  assert.equal(app.setOver(), false);
+});
+
+test('SET: confirmed reset goes back to Set 1', () => {
+  const app = loadApp({ confirmAnswer: true });
+  winSet(app);
+  winSet(app);
+  assert.equal(app.setLabel(), 'Set 3');
+  app.click('reset-match');
+  assert.equal(app.setLabel(), 'Set 1');
+  assert.equal(app.mode(), 'Receive');
+  assert.equal(app.setOver(), false);
+});
