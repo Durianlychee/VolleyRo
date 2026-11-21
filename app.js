@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
   // The lineup is stored in rotational-position order: lineup[i] is the player
   // in position i + 1 (1 = right back, the server; 2 = right front; ... 6 = middle back).
   // Rotating clockwise moves everyone down one position, so position 2 becomes the
