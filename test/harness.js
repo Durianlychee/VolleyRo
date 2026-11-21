@@ -79,14 +79,33 @@ const SELECTS = new Set(['on-court-select', 'bench-select']);
 // pre-fix version, to confirm the bug tests fail there).
 const APP_PATH = process.env.VOLLEYRO_APP || path.join(__dirname, '..', 'app.js');
 
-function loadApp({ confirmAnswer = true, wakeLock, session } = {}) {
+// A minimal in-memory localStorage; pass the same one to a second loadApp to
+// simulate reloading the page.
+function fakeStorage(initial = {}) {
+  const data = new Map(Object.entries(initial));
+  return {
+    getItem: (k) => (data.has(k) ? data.get(k) : null),
+    setItem: (k, v) => { data.set(k, String(v)); },
+    removeItem: (k) => { data.delete(k); },
+    data
+  };
+}
+
+function loadApp({ confirmAnswer = true, wakeLock, session, storage } = {}) {
   const els = {};
   const confirms = [];
   const docListeners = {};
   const document = {
     visibilityState: 'visible',
     addEventListener: (type, fn) => { (docListeners[type] ||= []).push(fn); },
-    getElementById: (id) => (els[id] ||= new El(SELECTS.has(id) ? 'select' : 'div')),
+    getElementById: (id) => {
+      if (!els[id]) {
+        els[id] = new El(SELECTS.has(id) ? 'select' : 'div');
+        // Matches index.html, where the banner starts hidden.
+        if (id === 'resume-banner') els[id].classes.add('is-hidden');
+      }
+      return els[id];
+    },
     createElement: (tag) => new El(tag)
   };
   const confirm = (message) => {
@@ -96,6 +115,7 @@ function loadApp({ confirmAnswer = true, wakeLock, session } = {}) {
   const src = fs.readFileSync(APP_PATH, 'utf8');
   const sandbox = { document, console, confirm, window: { confirm }, navigator: wakeLock ? { wakeLock } : {} };
   if (session) sandbox.sessionStorage = session;
+  if (storage) sandbox.localStorage = storage;
   vm.runInNewContext(src, sandbox, { filename: APP_PATH });
 
   const strip = (s) => s.replace(/<[^>]*>/g, '').trim();
@@ -162,7 +182,9 @@ function loadApp({ confirmAnswer = true, wakeLock, session } = {}) {
     setLabel: () => els['set-label'].textContent,
     setOver: () => !els['set-end'].classList.contains('is-hidden'),
     setEndText: () => els['set-end-text'].textContent,
-    nextSetLabel: () => els['next-set'].textContent
+    nextSetLabel: () => els['next-set'].textContent,
+    bannerShown: () => !els['resume-banner'].classList.contains('is-hidden'),
+    bannerText: () => els['resume-text'].textContent
   };
 }
 
@@ -208,4 +230,4 @@ function fakeSession(initial = {}) {
   };
 }
 
-module.exports = { loadApp, fakeWakeLock, fakeSession };
+module.exports = { loadApp, fakeStorage, fakeWakeLock, fakeSession };

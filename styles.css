@@ -858,3 +858,26 @@ button:disabled {
     display: inline;
   }
 }
+
+.resume-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent-ink);
+  border-radius: 10px;
+  color: var(--text);
+}
+
+.resume-banner p {
+  margin: 0;
+}
+
+.resume-banner.is-hidden {
+  display: none;
+}
