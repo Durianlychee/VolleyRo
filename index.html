@@ -50,7 +50,15 @@
             <button id="swap-phase" class="ghost">Toggle serve/receive</button>
           </div>
         </div>
-        <p class="rot-label" id="rot-label">Rot 1 · Setter in 1</p>
+        <div class="court-meta">
+          <p class="rot-label" id="rot-label">Rot 1 · Setter in 1</p>
+          <label class="switch" for="libero-toggle">
+            <input type="checkbox" id="libero-toggle" role="switch">
+            <span class="switch-track" aria-hidden="true"></span>
+            <span class="switch-text">With libero</span>
+          </label>
+        </div>
+        <p class="libero-note is-hidden" id="libero-note" aria-live="polite"></p>
         <div class="court" id="court"></div>
       </section>
 
